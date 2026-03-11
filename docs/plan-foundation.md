@@ -964,7 +964,7 @@ git commit -m "feat: add Auth.js v5 GitHub OAuth, one-line middleware, login pag
 
 ### Task 6: Project service (TDD)
 
-- [ ] **Step 1: Write failing tests**
+- [x] **Step 1: Write failing tests**
 
 Create `apps/web/src/test/services/projects.test.ts`:
 
@@ -995,7 +995,7 @@ describe('project service', () => {
 })
 ```
 
-- [ ] **Step 2: Run to verify it fails**
+- [x] **Step 2: Run to verify it fails**
 
 ```bash
 cd apps/web && npx vitest run src/test/services/projects.test.ts && cd ../..
@@ -1003,7 +1003,7 @@ cd apps/web && npx vitest run src/test/services/projects.test.ts && cd ../..
 
 Expected: FAIL
 
-- [ ] **Step 3: Write project service**
+- [x] **Step 3: Write project service**
 
 Create `apps/web/src/lib/services/projects.ts`:
 
@@ -1054,7 +1054,7 @@ export async function archiveProject(id: string, userId: string) {
 }
 ```
 
-- [ ] **Step 4: Run to verify it passes**
+- [x] **Step 4: Run to verify it passes**
 
 ```bash
 cd apps/web && npx vitest run src/test/services/projects.test.ts && cd ../..
@@ -1062,7 +1062,7 @@ cd apps/web && npx vitest run src/test/services/projects.test.ts && cd ../..
 
 Expected: PASS
 
-- [ ] **Step 5: Write sprint service with tests**
+- [x] **Step 5: Write sprint service with tests**
 
 Create `apps/web/src/test/services/sprints.test.ts`:
 
@@ -1104,7 +1104,7 @@ describe('sprint service', () => {
 })
 ```
 
-- [ ] **Step 6: Run to verify it fails**
+- [x] **Step 6: Run to verify it fails**
 
 ```bash
 cd apps/web && npx vitest run src/test/services/sprints.test.ts && cd ../..
@@ -1112,7 +1112,7 @@ cd apps/web && npx vitest run src/test/services/sprints.test.ts && cd ../..
 
 Expected: FAIL
 
-- [ ] **Step 7: Write sprint service**
+- [x] **Step 7: Write sprint service**
 
 Create `apps/web/src/lib/services/sprints.ts`:
 
@@ -1148,7 +1148,7 @@ export async function updateSprintStatus(id: string, status: typeof sprints.$inf
 }
 ```
 
-- [ ] **Step 8: Run to verify it passes**
+- [x] **Step 8: Run to verify it passes**
 
 ```bash
 cd apps/web && npx vitest run src/test/services/sprints.test.ts && cd ../..
@@ -1156,7 +1156,7 @@ cd apps/web && npx vitest run src/test/services/sprints.test.ts && cd ../..
 
 Expected: PASS
 
-- [ ] **Step 9: Write API routes**
+- [x] **Step 9: Write API routes**
 
 Create `apps/web/src/app/api/projects/route.ts`:
 
@@ -1228,7 +1228,7 @@ export async function POST(request: Request) {
 }
 ```
 
-- [ ] **Step 10: Run all tests**
+- [x] **Step 10: Run all tests**
 
 ```bash
 cd apps/web && npx vitest run && cd ../..
@@ -1236,7 +1236,7 @@ cd apps/web && npx vitest run && cd ../..
 
 Expected: all PASS
 
-- [ ] **Step 11: Commit**
+- [x] **Step 11: Commit**
 
 ```bash
 git add apps/web/src/
@@ -1268,7 +1268,7 @@ git commit -m "feat: project + sprint service layer and API routes (TDD)"
 
 > **React Compiler note:** Next.js 16 enables the React Compiler by default. Do NOT add manual `useMemo`, `useCallback`, or `memo()` to these components — the compiler handles render optimisation automatically. Adding them manually may interfere with compiler analysis and introduces unnecessary complexity.
 
-- [ ] **Step 1: Write and run sidebar test**
+- [x] **Step 1: Write and run sidebar test**
 
 Create `apps/web/src/test/components/Sidebar.test.tsx`:
 
@@ -1295,7 +1295,7 @@ cd apps/web && npx vitest run src/test/components/Sidebar.test.tsx && cd ../..
 
 Expected: FAIL
 
-- [ ] **Step 2: Write Sidebar component**
+- [x] **Step 2: Write Sidebar component**
 
 Create `apps/web/src/components/dashboard/Sidebar.tsx`:
 
@@ -1342,7 +1342,7 @@ export function Sidebar({ projects, currentProjectId }: SidebarProps) {
 }
 ```
 
-- [ ] **Step 3: Run sidebar test to verify it passes**
+- [x] **Step 3: Run sidebar test to verify it passes**
 
 ```bash
 cd apps/web && npx vitest run src/test/components/Sidebar.test.tsx && cd ../..
@@ -1350,7 +1350,7 @@ cd apps/web && npx vitest run src/test/components/Sidebar.test.tsx && cd ../..
 
 Expected: PASS
 
-- [ ] **Step 4: Write StageProgress component with test**
+- [x] **Step 4: Write StageProgress component with test**
 
 Create `apps/web/src/test/components/StageProgress.test.tsx`:
 
@@ -1439,7 +1439,7 @@ cd apps/web && npx vitest run src/test/components/StageProgress.test.tsx && cd .
 
 Expected: PASS
 
-- [ ] **Step 5: Write NewProjectForm with test**
+- [x] **Step 5: Write NewProjectForm with test**
 
 Create `apps/web/src/test/components/NewProjectForm.test.tsx`:
 
@@ -1480,7 +1480,7 @@ cd apps/web && npx vitest run src/test/components/NewProjectForm.test.tsx && cd 
 
 Expected: PASS
 
-- [ ] **Step 6: Write all dashboard pages**
+- [x] **Step 6: Write all dashboard pages**
 
 Write these pages (same implementation as previous plan, all paths updated to `apps/web/src/`):
 
@@ -1490,7 +1490,7 @@ Write these pages (same implementation as previous plan, all paths updated to `a
 - `apps/web/src/app/dashboard/projects/[projectId]/page.tsx`
 - `apps/web/src/app/dashboard/projects/[projectId]/sprints/[sprintId]/page.tsx`
 
-- [ ] **Step 7: Run all tests**
+- [x] **Step 7: Run all tests**
 
 ```bash
 cd apps/web && npx vitest run && cd ../..
@@ -1498,7 +1498,7 @@ cd apps/web && npx vitest run && cd ../..
 
 Expected: all PASS
 
-- [ ] **Step 8: Commit**
+- [x] **Step 8: Commit**
 
 ```bash
 git add .
