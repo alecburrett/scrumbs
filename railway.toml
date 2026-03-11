@@ -2,7 +2,8 @@
 builder = "nixpacks"
 
 [deploy]
-startCommand = "cd packages/db && npx drizzle-kit migrate && cd ../.. && npm run start --workspace=apps/web"
+preDeployCommand = "cd packages/db && npx drizzle-kit migrate"
+startCommand = "npm run start --workspace=apps/web"
 healthcheckPath = "/api/health"
 healthcheckTimeout = 30
 restartPolicyType = "on_failure"
