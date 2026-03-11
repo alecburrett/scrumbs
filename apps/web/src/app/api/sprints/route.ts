@@ -1,3 +1,5 @@
+export const dynamic = 'force-dynamic'
+
 import { auth } from '@/auth'
 import { getProjectById } from '@/lib/services/projects'
 import { createSprint } from '@/lib/services/sprints'

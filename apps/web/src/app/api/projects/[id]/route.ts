@@ -1,3 +1,5 @@
+export const dynamic = 'force-dynamic'
+
 import { auth } from '@/auth'
 import { getProjectById, archiveProject } from '@/lib/services/projects'
 import { NextResponse } from 'next/server'

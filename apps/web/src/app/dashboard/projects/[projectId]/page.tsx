@@ -1,3 +1,5 @@
+export const dynamic = 'force-dynamic'
+
 import { auth } from '@/auth'
 import { redirect, notFound } from 'next/navigation'
 import { getProjectById } from '@/lib/services/projects'
