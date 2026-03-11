@@ -794,7 +794,7 @@ git commit -m "feat: add shared packages/db with Drizzle schema (incl. agent_tas
 
 ### Task 5: Auth.js config + middleware
 
-- [ ] **Step 1: Write failing test**
+- [x] **Step 1: Write failing test**
 
 Create `apps/web/src/test/auth.test.ts`:
 
@@ -812,7 +812,7 @@ describe('auth config', () => {
 })
 ```
 
-- [ ] **Step 2: Run to verify it fails**
+- [x] **Step 2: Run to verify it fails**
 
 ```bash
 cd apps/web && npx vitest run src/test/auth.test.ts && cd ../..
@@ -820,7 +820,7 @@ cd apps/web && npx vitest run src/test/auth.test.ts && cd ../..
 
 Expected: FAIL — `@/auth` module not found
 
-- [ ] **Step 3: Create auth.ts**
+- [x] **Step 3: Create auth.ts**
 
 Create `apps/web/src/auth.ts`:
 
@@ -852,7 +852,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
 })
 ```
 
-- [ ] **Step 4: Create route handler**
+- [x] **Step 4: Create route handler**
 
 Create `apps/web/src/app/api/auth/[...nextauth]/route.ts`:
 
@@ -861,7 +861,7 @@ import { handlers } from '@/auth'
 export const { GET, POST } = handlers
 ```
 
-- [ ] **Step 5: Create one-line middleware**
+- [x] **Step 5: Create one-line middleware**
 
 Create `apps/web/src/middleware.ts`:
 
@@ -873,7 +873,7 @@ export const config = {
 }
 ```
 
-- [ ] **Step 6: Run test to verify it passes**
+- [x] **Step 6: Run test to verify it passes**
 
 ```bash
 cd apps/web && npx vitest run src/test/auth.test.ts && cd ../..
@@ -881,7 +881,7 @@ cd apps/web && npx vitest run src/test/auth.test.ts && cd ../..
 
 Expected: PASS
 
-- [ ] **Step 7: Write login page + sign-in button**
+- [x] **Step 7: Write login page + sign-in button**
 
 Create `apps/web/src/app/login/page.tsx`:
 
@@ -937,7 +937,7 @@ export function SignInButton() {
 }
 ```
 
-- [ ] **Step 8: Commit**
+- [x] **Step 8: Commit**
 
 ```bash
 git add apps/web/src/
