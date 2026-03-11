@@ -1511,7 +1511,7 @@ git commit -m "feat: dashboard shell — sidebar, stage progress, project pages,
 
 ### Task 8: Deploy to Railway
 
-- [ ] **Step 1: Verify Railway CLI is linked**
+- [x] **Step 1: Verify Railway CLI is linked**
 
 ```bash
 railway status
@@ -1519,7 +1519,7 @@ railway status
 
 Expected: shows linked project. If not: `railway link`.
 
-- [ ] **Step 2: Add Postgres service via Railway CLI**
+- [x] **Step 2: Add Postgres service via Railway CLI**
 
 ```bash
 railway add --database postgres
@@ -1527,7 +1527,7 @@ railway add --database postgres
 
 Expected: Postgres provisioned. Railway sets `DATABASE_URL` automatically in the service environment.
 
-- [ ] **Step 3: Set environment variables**
+- [x] **Step 3: Set environment variables**
 
 ```bash
 railway variables set \
@@ -1541,7 +1541,7 @@ railway variables set \
 
 > `DATABASE_URL` is set automatically by Railway when a Postgres service is linked — no need to set it manually.
 
-- [ ] **Step 4: Run migrations on Railway**
+- [x] **Step 4: Run migrations on Railway**
 
 ```bash
 railway run --service postgres npx drizzle-kit migrate
@@ -1553,13 +1553,13 @@ Or if that doesn't work:
 DATABASE_MIGRATION_URL=$(railway variables get DATABASE_URL) npx --prefix packages/db drizzle-kit migrate
 ```
 
-- [ ] **Step 5: Deploy**
+- [x] **Step 5: Deploy**
 
 ```bash
 railway up
 ```
 
-- [ ] **Step 6: Verify deployment**
+- [x] **Step 6: Verify deployment**
 
 ```bash
 RAILWAY_URL=$(railway domain)
@@ -1568,14 +1568,14 @@ curl "https://$RAILWAY_URL/api/health"
 
 Expected: `{"status":"ok","timestamp":"..."}`
 
-- [ ] **Step 7: Update NEXT_PUBLIC_APP_URL**
+- [x] **Step 7: Update NEXT_PUBLIC_APP_URL**
 
 ```bash
 railway variables set NEXT_PUBLIC_APP_URL="https://$(railway domain)"
 railway up  # redeploy with updated var
 ```
 
-- [ ] **Step 8: Final commit**
+- [x] **Step 8: Final commit**
 
 ```bash
 git add .env.example railway.toml
