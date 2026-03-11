@@ -112,7 +112,7 @@ Expected: prints your Railway account email. If not, run `railway login`.
 - Create: `packages/db/`
 - Create: `packages/types/`
 
-- [ ] **Step 1: Create root package.json**
+- [x] **Step 1: Create root package.json**
 
 ```bash
 mkdir -p apps/web apps/agent packages/db packages/types
@@ -138,13 +138,13 @@ Create `package.json` (root):
 }
 ```
 
-- [ ] **Step 2: Install Turborepo**
+- [x] **Step 2: Install Turborepo**
 
 ```bash
 npm install
 ```
 
-- [ ] **Step 3: Create turbo.json**
+- [x] **Step 3: Create turbo.json**
 
 ```json
 {
@@ -166,7 +166,7 @@ npm install
 }
 ```
 
-- [ ] **Step 4: Bootstrap Next.js app inside apps/web**
+- [x] **Step 4: Bootstrap Next.js app inside apps/web**
 
 ```bash
 cd apps/web
@@ -182,7 +182,7 @@ cd ../..
 
 > `create-next-app` will scaffold with Next.js 16. **Do NOT pass `--turbopack`** — Turbopack is the default bundler in Next.js 16 for both `next dev` and `next build`. No flag needed; adding it explicitly is a no-op (and wrong in some older 16.x RCs). Tailwind v4 is CSS-first — there is **no `tailwind.config.ts`** by default. Tokens are defined in `globals.css` using `@theme {}` blocks.
 
-- [ ] **Step 5: Install web app dependencies**
+- [x] **Step 5: Install web app dependencies**
 
 ```bash
 cd apps/web
@@ -206,7 +206,7 @@ npm install -D \
 cd ../..
 ```
 
-- [ ] **Step 6: Create packages/types**
+- [x] **Step 6: Create packages/types**
 
 Create `packages/types/package.json`:
 
@@ -251,7 +251,7 @@ export interface Message {
 }
 ```
 
-- [ ] **Step 7: Create agent stub**
+- [x] **Step 7: Create agent stub**
 
 Create `apps/agent/package.json`:
 
@@ -286,7 +286,7 @@ const server = http.createServer((req, res) => {
 server.listen(3001, () => console.log('Agent stub running on :3001'))
 ```
 
-- [ ] **Step 8: Create railway.toml at root**
+- [x] **Step 8: Create railway.toml at root**
 
 ```toml
 [build]
@@ -299,7 +299,7 @@ healthcheckTimeout = 30
 restartPolicyType = "on_failure"
 ```
 
-- [ ] **Step 9: Create .env.example**
+- [x] **Step 9: Create .env.example**
 
 Create `.env.example` at root:
 
@@ -324,7 +324,7 @@ AGENT_SERVICE_URL=https://your-agent.up.railway.app
 AGENT_SERVICE_SECRET=a-long-random-secret-min-32-chars
 ```
 
-- [ ] **Step 10: Add .gitignore**
+- [x] **Step 10: Add .gitignore**
 
 ```bash
 cat >> .gitignore << 'EOF'
