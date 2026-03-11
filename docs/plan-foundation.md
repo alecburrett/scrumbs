@@ -73,7 +73,7 @@ AGENT_SERVICE_SECRET=dev-secret-change-in-production
 
 **Files:** none created
 
-- [ ] **Step 1: Verify .env.local exists and is populated**
+- [x] **Step 1: Verify .env.local exists and is populated**
 
 ```bash
 test -f .env.local && echo "EXISTS" || echo "MISSING — stop and complete Human Prerequisites first"
@@ -81,7 +81,7 @@ test -f .env.local && echo "EXISTS" || echo "MISSING — stop and complete Human
 
 Expected: `EXISTS`
 
-- [ ] **Step 2: Verify required vars are set**
+- [x] **Step 2: Verify required vars are set**
 
 ```bash
 source .env.local
@@ -92,7 +92,7 @@ done
 
 Expected: all lines print `OK: ...`. If any print `MISSING`, stop and complete the Human Prerequisites section.
 
-- [ ] **Step 3: Verify Railway CLI is authenticated**
+- [x] **Step 3: Verify Railway CLI is authenticated**
 
 ```bash
 railway whoami
