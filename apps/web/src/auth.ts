@@ -1,10 +1,10 @@
 import NextAuth from 'next-auth'
 import GitHub from 'next-auth/providers/github'
 import { DrizzleAdapter } from '@auth/drizzle-adapter'
-import { db, users, accounts } from '@scrumbs/db'
+import { getDb, users, accounts } from '@scrumbs/db'
 
-export const { handlers, auth, signIn, signOut } = NextAuth({
-  adapter: DrizzleAdapter(db, { usersTable: users, accountsTable: accounts }),
+export const { handlers, auth, signIn, signOut } = NextAuth((req) => ({
+  adapter: DrizzleAdapter(getDb(), { usersTable: users, accountsTable: accounts }),
   providers: [
     GitHub({
       authorization: { params: { scope: 'read:user repo' } },
@@ -22,4 +22,4 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
     },
   },
   pages: { signIn: '/login' },
-})
+}))
