@@ -337,7 +337,7 @@ dist/
 EOF
 ```
 
-- [ ] **Step 11: Commit**
+- [x] **Step 11: Commit**
 
 ```bash
 git init
@@ -356,7 +356,7 @@ git commit -m "feat: initialise Turborepo monorepo with apps/web, apps/agent, pa
 - Create: `apps/web/src/test/setup.ts`
 - Create: `apps/web/vitest.config.ts`
 
-- [ ] **Step 1: Install shadcn/ui in apps/web**
+- [x] **Step 1: Install shadcn/ui in apps/web**
 
 ```bash
 cd apps/web
@@ -369,7 +369,7 @@ cd ../..
 
 shadcn/ui supports Tailwind v4 natively — the init command detects the version automatically.
 
-- [ ] **Step 2: Write vitest config**
+- [x] **Step 2: Write vitest config**
 
 Create `apps/web/vitest.config.ts`:
 
@@ -394,7 +394,7 @@ Create `apps/web/src/test/setup.ts`:
 import '@testing-library/jest-dom'
 ```
 
-- [ ] **Step 3: Write failing colour token test**
+- [x] **Step 3: Write failing colour token test**
 
 In Tailwind v4 there is no config file to import, so we test that the CSS custom properties are present in `globals.css` instead.
 
@@ -428,7 +428,7 @@ describe('persona colour tokens (Tailwind v4 CSS custom properties)', () => {
 })
 ```
 
-- [ ] **Step 4: Run test to verify it fails**
+- [x] **Step 4: Run test to verify it fails**
 
 ```bash
 cd apps/web && npx vitest run src/test/tokens.test.ts && cd ../..
@@ -436,7 +436,7 @@ cd apps/web && npx vitest run src/test/tokens.test.ts && cd ../..
 
 Expected: FAIL — tokens not in globals.css yet
 
-- [ ] **Step 5: Add persona tokens to globals.css**
+- [x] **Step 5: Add persona tokens to globals.css**
 
 Edit `apps/web/src/app/globals.css` — add the `@theme` block after the existing `@import "tailwindcss"` line:
 
@@ -468,7 +468,7 @@ Edit `apps/web/src/app/globals.css` — add the `@theme` block after the existin
 
 These tokens are now available as Tailwind utilities: `bg-persona-pablo`, `text-terminal-success`, `border-persona-viktor`, etc.
 
-- [ ] **Step 6: Run test to verify it passes**
+- [x] **Step 6: Run test to verify it passes**
 
 ```bash
 cd apps/web && npx vitest run src/test/tokens.test.ts && cd ../..
@@ -476,7 +476,7 @@ cd apps/web && npx vitest run src/test/tokens.test.ts && cd ../..
 
 Expected: PASS
 
-- [ ] **Step 7: Add health check route**
+- [x] **Step 7: Add health check route**
 
 Create `apps/web/src/app/api/health/route.ts`:
 
