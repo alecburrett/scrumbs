@@ -547,7 +547,7 @@ git commit -m "feat: add shadcn/ui, Vitest v4, persona tokens (Tailwind v4 CSS @
 cd packages/db && npm install && cd ../..
 ```
 
-- [ ] **Step 3: Write failing schema shape test**
+- [x] **Step 3: Write failing schema shape test**
 
 Create `packages/db/src/schema.test.ts`:
 
