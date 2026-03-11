@@ -486,7 +486,7 @@ export async function GET() {
 }
 ```
 
-- [ ] **Step 8: Commit**
+- [x] **Step 8: Commit**
 
 ```bash
 git add .
@@ -517,7 +517,7 @@ git commit -m "feat: add shadcn/ui, Vitest v4, persona tokens (Tailwind v4 CSS @
 - Create: `packages/db/src/index.ts`
 - Create: `packages/db/drizzle.config.ts`
 
-- [ ] **Step 1: Create packages/db package.json**
+- [x] **Step 1: Create packages/db package.json**
 
 ```json
 {
@@ -541,7 +541,7 @@ git commit -m "feat: add shadcn/ui, Vitest v4, persona tokens (Tailwind v4 CSS @
 }
 ```
 
-- [ ] **Step 2: Install packages/db dependencies**
+- [x] **Step 2: Install packages/db dependencies**
 
 ```bash
 cd packages/db && npm install && cd ../..
@@ -581,7 +581,7 @@ describe('database schema', () => {
 })
 ```
 
-- [ ] **Step 4: Run test to verify it fails**
+- [x] **Step 4: Run test to verify it fails**
 
 ```bash
 cd packages/db && npx vitest run src/schema.test.ts && cd ../..
@@ -589,7 +589,7 @@ cd packages/db && npx vitest run src/schema.test.ts && cd ../..
 
 Expected: FAIL — schema not found
 
-- [ ] **Step 5: Write the Drizzle schema**
+- [x] **Step 5: Write the Drizzle schema**
 
 Create `packages/db/src/schema.ts`:
 
@@ -713,7 +713,7 @@ export const conversations = pgTable('conversations', {
 
 > **Security note:** All DB access is server-side via Drizzle using `DATABASE_URL`. Data isolation is enforced by the service layer (`where eq(table.userId, user.id)`) on every query.
 
-- [ ] **Step 6: Write DB connection**
+- [x] **Step 6: Write DB connection**
 
 Create `packages/db/src/index.ts`:
 
@@ -730,7 +730,7 @@ export const db = drizzle(client, { schema })
 export * from './schema'
 ```
 
-- [ ] **Step 7: Write drizzle.config.ts**
+- [x] **Step 7: Write drizzle.config.ts**
 
 Create `packages/db/drizzle.config.ts`:
 
@@ -748,7 +748,7 @@ export default {
 } satisfies Config
 ```
 
-- [ ] **Step 8: Run schema test to verify it passes**
+- [x] **Step 8: Run schema test to verify it passes**
 
 ```bash
 cd packages/db && npx vitest run src/schema.test.ts && cd ../..
@@ -756,7 +756,7 @@ cd packages/db && npx vitest run src/schema.test.ts && cd ../..
 
 Expected: PASS
 
-- [ ] **Step 9: Generate and apply migrations**
+- [x] **Step 9: Generate and apply migrations**
 
 ```bash
 cd packages/db
@@ -767,8 +767,9 @@ cd ../..
 ```
 
 Expected: migration files created in `packages/db/src/migrations/`, applied successfully.
+> Note: migration generated (0000_chemical_carlie_cooper.sql). Apply deferred to Task 8 (Railway deploy) — DATABASE_URL is placeholder until Railway Postgres provisioned.
 
-- [ ] **Step 10: Commit**
+- [x] **Step 10: Commit**
 
 ```bash
 git add packages/db/ packages/types/
