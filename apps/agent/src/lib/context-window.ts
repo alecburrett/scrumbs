@@ -37,7 +37,7 @@ export async function maybeSummariseHistory(
   })
 
   const summaryText =
-    summaryResponse.content[0].type === 'text'
+    summaryResponse.content[0]?.type === 'text'
       ? summaryResponse.content[0].text
       : ''
 
