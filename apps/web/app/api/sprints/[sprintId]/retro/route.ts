@@ -29,7 +29,7 @@ export async function POST(
     .from(sprints)
     .where(eq(sprints.projectId, currentSprint.projectId))
 
-  const nextNumber = Math.max(...projectSprints.map((s) => s.number)) + 1
+  const nextNumber = projectSprints.length > 0 ? Math.max(...projectSprints.map((s) => s.number)) + 1 : 1;
 
   // Create Sprint N+1
   const [newSprint] = await db
