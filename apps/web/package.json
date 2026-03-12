@@ -11,6 +11,7 @@
     "@auth/drizzle-adapter": "~1.x",
     "@octokit/rest": "~21.x",
     "@scrumbs/db": "*",
+    "@scrumbs/personas": "*",
     "@scrumbs/types": "*",
     "next": "~15.2.x",
     "next-auth": "~5.x",
