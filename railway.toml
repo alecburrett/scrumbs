@@ -1,9 +1,0 @@
-[build]
-builder = "nixpacks"
-
-[deploy]
-preDeployCommand = "node packages/db/migrate.mjs"
-startCommand = "npm run start --workspace=apps/web"
-healthcheckPath = "/api/health"
-healthcheckTimeout = 30
-restartPolicyType = "on_failure"
