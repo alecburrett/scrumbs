@@ -467,7 +467,16 @@ Viktor's tools (`readFile`, `writeFile`, `runTests`, `bash`, `gitCommit`, `gitPu
 
 **Rationale:** A fresh clone per task is simple, correct, and avoids stale state between tasks. The overhead (clone + install) is acceptable at MVP — it happens once per Viktor task. Caching `node_modules` across tasks is a Phase 2 optimisation.
 
-**GitHub token for git push:** Git push uses the user's GitHub OAuth token for authentication. The token is passed via HTTPS remote URL: `https://{githubToken}@github.com/{owner}/{repo}.git`. The token is never written to disk — it is used only in the clone URL and not stored in the repo's `.git/config`.
+**GitHub token for git operations:** Git operations use the user's GitHub OAuth token via a `GIT_ASKPASS` helper. Embedding the token directly in the HTTPS remote URL (e.g. `https://{token}@github.com/...`) exposes it in the process list (`ps aux`), where other processes on the same host can read it.
+
+Instead:
+1. Before cloning, write a minimal askpass script to a temp file (`/tmp/scrumbs/{taskId}-askpass.sh`) with mode `0700`
+2. Set the token in a separate environment variable (e.g. `GIT_TOKEN`) — not as a CLI argument
+3. The askpass script echoes `$GIT_TOKEN` when git requests a password
+4. Run all git operations with `GIT_ASKPASS` and `GIT_TOKEN` set in the subprocess environment, and `GIT_TERMINAL_PROMPT=0` to prevent interactive prompts
+5. Delete the askpass script immediately after the task completes or is cancelled
+
+The token is never embedded in the remote URL or stored in `.git/config`. It lives only in the process environment, which is a significantly more restricted attack surface than command-line arguments.
 
 **User isolation:** Each task uses a unique `taskId`-namespaced directory. Concurrent tasks for different users cannot access each other's working directories.
 
@@ -1546,6 +1555,7 @@ Stories are ordered by dependency. Each story is scoped to a single focused impl
 - **Mobile-responsive layout:** Deferred to Phase 2. Target user is a developer at a desktop. ✅
 - **Agent service filesystem model:** Fresh clone per task into `/tmp/scrumbs/{taskId}/`. Accept the overhead at MVP. Caching is Phase 2. ✅
 - **GitHub token in agent service:** Passed in task input (`githubToken` field on all relevant input shapes). Web service retrieves from `accounts` table before creating the task. ✅
+- **Git credential security:** Token supplied via `GIT_ASKPASS` helper script + `GIT_TOKEN` env var. Never embedded in the remote URL (avoids `ps aux` exposure). Askpass script written to `/tmp/scrumbs/{taskId}-askpass.sh` (mode `0700`), deleted after task. ✅
 - **Token counting:** Character-count heuristic (`tokens ≈ chars / 4`). No `@anthropic-ai/tokenizer` dependency. ✅
 - **Conversation storage:** JSON array in `conversations.messages` for MVP. Separate `messages` table in Phase 2. ✅
 - **Context window management:** Rolling summarisation at 60% context window capacity using Haiku for summaries. ✅
