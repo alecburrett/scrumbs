@@ -1,8 +1,8 @@
 # Scrumbs — Product Requirements Document
 
-**Version:** 0.9  
-**Date:** 2026-03-11  
-**Status:** Draft — actively iterating
+**Version:** 1.0
+**Date:** 2026-03-12
+**Status:** Approved for implementation
 
 ---
 
@@ -66,10 +66,10 @@ The methodology beneath Scrumbs is obra/superpowers — a battle-tested agentic 
 
 ### Max — Tech Operations
 
-- **Personality:** Orchestrator of parallel work. Sees the whole board. Multi-task obsessed, thinks in systems, calm and strategic. Loves a clean git graph.
-- **Affectations:** Talks in "streams" and "lanes". "I can spin up three agents for this." Manages the environment like a conductor.
-- **Underlying Skills:** using-git-worktrees, dispatching-parallel-agents, executing-plans
-- **Scope:** Sprint-level — environment setup, parallel task orchestration, plan execution
+- **Personality:** Sees the whole board. Thinks in systems, calm and strategic. Loves a clean git graph.
+- **Affectations:** "Branch is ready." "We're set up." "Viktor, you're up." Calm handoff energy.
+- **Underlying Skills:** using-git-worktrees, executing-plans
+- **Scope:** Sprint-level — feature branch creation, dev environment handoff to Viktor. *(Parallel lane orchestration is a Phase 2 capability.)*
 
 ### Coach — *(SaaS Pro tier — post-MVP)*
 
@@ -103,7 +103,6 @@ Project (= GitHub Repo)
 | Requirements           | Pablo  | Project | Once, updated on request |
 | PRD                    | Pablo  | Project | Once, updated on request |
 | Sprint plan            | Stella | Sprint  | Each sprint              |
-| Dev environment setup  | Max    | Sprint  | Each sprint              |
 | Implementation + tests | Viktor | Sprint  | Each sprint              |
 | Code review            | Rex    | Sprint  | Each sprint              |
 | QA sign-off            | Quinn  | Sprint  | Each sprint              |
@@ -112,19 +111,21 @@ Project (= GitHub Repo)
 
 ### New Project Flow (first time)
 
-The Requirements and PRD stages are a **pre-sprint flow** — they appear before the 7-stage sprint progress bar. Once the PRD is approved, the user enters the sprint cycle.
+The Requirements and PRD stages are a **pre-sprint flow** — they appear before the 6-stage sprint progress bar. Once the PRD is approved, the user enters the sprint cycle.
 
 ```
-[Pre-Sprint]                           [Sprint Cycle — 7 stages]
-Requirements → PRD → Sprint Planning → Dev Setup → Development → Review → QA → Deploy → Retro
-    Pablo      Pablo      Stella          Max         Viktor       Rex    Quinn   Dex    Stella
+[Pre-Sprint]                      [Sprint Cycle — 6 stages]
+Requirements → PRD → Sprint Planning → Development → Review → QA → Deploy → Retro
+    Pablo      Pablo      Stella          Viktor       Rex    Quinn   Dex    Stella
 ```
+
+On sprint plan approval, Stella automatically creates the feature branch (via Max in the background). Max introduces himself briefly at the top of the Development stage before handing to Viktor.
 
 ### Returning User Flow (new feature on existing project)
 
 ```
-Sprint N Planning → Dev Setup → Development → Review → QA → Deploy → Retro
-      Stella           Max         Viktor       Rex    Quinn   Dex    Stella
+Sprint N Planning → Development → Review → QA → Deploy → Retro
+      Stella          Viktor       Rex    Quinn   Dex    Stella
 ```
 
 The user triggers a new sprint via the "Start Sprint N+1" CTA on the previous sprint's retrospective, or via a "New Sprint" action on the project dashboard. Stella reads the previous retro and any backlog carry-forwards before proposing the new sprint plan.
@@ -141,45 +142,38 @@ Pablo is called back in only when the PRD needs updating (e.g. major pivot, new 
 - For Sprint N+1: Stella also reads `sprints/sprint-(N)-retro.md` and any carry-forward stories
 - Decomposes into sprint: goal, user stories, story points, acceptance criteria
 - User approves or requests changes
-- **Output:** `sprints/sprint-N.md` committed to repo
+- On approval: feature branch automatically created in GitHub (e.g. `sprint-3-user-auth`), `Sprint.featureBranch` set
+- **Output:** `sprints/sprint-N.md` committed to repo + feature branch created
 
-### Stage 2 — Dev Environment Setup (Max)
+### Stage 2 — Development (Viktor)
 
-- Max creates the git worktree / feature branch for this sprint
-- Reviews the sprint plan and identifies parallelisable components
-- **Parallel execution git strategy:** Each parallel lane gets its own git worktree branched from the sprint feature branch (e.g. `sprint-3-user-auth/lane-1`, `sprint-3-user-auth/lane-2`). Max merges lanes back into the sprint feature branch when all lanes complete. Only stories touching completely disjoint file sets are eligible for parallelisation — Max validates this during planning.
-- If parallelisable: prepares the parallel execution plan with worktree assignments and briefs Viktor
-- If linear: hands off to Viktor directly
-- **Output:** clean isolated branch(es) + execution plan
-
-### Stage 3 — Development (Viktor + optionally Max)
-
+- Max introduces himself briefly ("Branch ready. Viktor, you're up.") then hands off
 - Viktor runs subagent-driven-development
+- Agent service clones the user's GitHub repo fresh per task into a temporary working directory, installs dependencies, then proceeds
 - Terminal panel streams all tool use in real-time (file reads/writes, tests, git, bash)
 - Strictly enforces TDD: tests written before implementation, always
-- Parallel mode: when Max has identified independent tasks, Viktor executes up to 3 concurrent Claude API agents, each in its own git worktree. UI shows multiple terminal panels side by side.
 - **Output:** committed code on feature branch + test results
 
-### Stage 4 — Code Review (Rex)
+### Stage 3 — Code Review (Rex)
 
 - Rex reviews the PR diff against PRD, sprint plan, code quality, test coverage
 - Issues: 🔴 Critical / 🟡 Let's Improve This / 🟢 Minor Suggestion
-- Viktor looped in for Critical fixes (with Max re-running if parallel work needed)
+- Viktor looped in for Critical fixes
 - **Output:** approved PR
 
-### Stage 5 — QA (Quinn)
+### Stage 4 — QA (Quinn)
 
 - Quinn runs full test suite, flags failures, coverage gaps, edge cases
 - Coordinates with Viktor for fixes
 - **Output:** QA sign-off report
 
-### Stage 6 — Deploy (Dex)
+### Stage 5 — Deploy (Dex)
 
 - Dex triggers GitHub Actions pipeline
 - Preview deploy → user approval → production
 - **Output:** live production URL + deploy record
 
-### Stage 7 — Retrospective (Stella)
+### Stage 6 — Retrospective (Stella)
 
 - What shipped, what took longer, carry-forwards
 - Backlog updated in repo
@@ -200,26 +194,25 @@ Sprint status drives the entire workflow. Only the transitions below are valid. 
                     │  stage's artifacts to superseded.  │
                     └──────────────────────────────────┘
 
-planning ──► setup ──► development ──► review ──► qa ──► deploying ──► complete
-                           ▲              │       ▲        │
-                           │              │       │        │
-                           └──────────────┘       └────────┘
-                          (critical fixes)      (test failures)
+planning ──► development ──► review ──► qa ──► deploying ──► complete
+                  ▲              │       ▲        │
+                  │              │       │        │
+                  └──────────────┘       └────────┘
+                 (critical fixes)      (test failures)
 ```
 
 **Valid transitions:**
 
-| From          | To            | Trigger                                        |
-| ------------- | ------------- | ---------------------------------------------- |
-| `planning`    | `setup`       | User approves sprint plan                      |
-| `setup`       | `development` | User confirms Max's execution plan              |
-| `development` | `review`      | Viktor completes all stories (or all lanes)     |
-| `review`      | `development` | Rex issues 🔴 Critical finding → Viktor fixes   |
-| `review`      | `qa`          | User approves PR (no unresolved 🔴 findings)    |
-| `qa`          | `deploying`   | Quinn signs off (all tests pass)                |
-| `qa`          | `development` | Test failures → Viktor fixes                    |
-| `deploying`   | `complete`    | Production deploy succeeds                      |
-| `deploying`   | `qa`          | Deploy failure → back to QA for diagnosis        |
+| From          | To            | Trigger                                       |
+| ------------- | ------------- | --------------------------------------------- |
+| `planning`    | `development` | User approves sprint plan (branch auto-created) |
+| `development` | `review`      | Viktor completes all stories                  |
+| `review`      | `development` | Rex issues 🔴 Critical finding → Viktor fixes  |
+| `review`      | `qa`          | User approves PR (no unresolved 🔴 findings)   |
+| `qa`          | `deploying`   | Quinn signs off (all tests pass)               |
+| `qa`          | `development` | Test failures → Viktor fixes                  |
+| `deploying`   | `complete`    | Production deploy succeeds                    |
+| `deploying`   | `qa`          | Deploy failure → back to QA for diagnosis      |
 
 **Step-back rules:** User can step back from any stage to its immediately prior stage only. Step-back requires confirmation. Stepping back marks the current stage's artifacts as `superseded` and resets `Sprint.status` to the prior stage. Stepping back from `development` does not roll back git commits — partial work remains on the feature branch.
 
@@ -456,22 +449,27 @@ Agent tasks for complex sprints can accumulate large conversation histories (too
 - The last 3 turns are kept verbatim to maintain immediate working context
 - Summarisation events are emitted to the SSE stream as `context_summary` events (visible in terminal panel as a dim "Context summarised" indicator)
 
-**Token counting:** Use `@anthropic-ai/tokenizer` or a simple word-count heuristic (1 token ≈ 0.75 words) for the budget check. Exact counting is not required — the 60% threshold provides sufficient headroom.
+**Token counting:** Use a simple character-count heuristic (`tokens ≈ chars / 4`) for the budget check. Exact counting is not required — the 60% threshold provides sufficient headroom. Do not add `@anthropic-ai/tokenizer` as a dependency.
 
 **Human-in-the-loop approval pattern:**  
 Tools flagged as requiring approval pause the agent loop and emit an `approval_required` SSE event to the terminal panel. The loop awaits a Promise that resolves only when the web service POSTs the user's approval or rejection to `POST /tasks/:id/approve`. Rejected operations are not executed; Viktor receives the rejection as a tool result and must revise.
 
-**Parallel agent execution (Max's mode):**
+### Agent Service Filesystem Model
 
-```ts
-const results = await Promise.all([
-  runAgentTask(task1, streamToPanel(1)),
-  runAgentTask(task2, streamToPanel(2)),
-  runAgentTask(task3, streamToPanel(3)),
-])
-```
+Viktor's tools (`readFile`, `writeFile`, `runTests`, `bash`, `gitCommit`, `gitPush`) operate on an actual filesystem. The agent service must have a working copy of the user's GitHub repo with dependencies installed.
 
-Each parallel task has its own `AgentTask` record, `sessionId`, SSE stream, and git worktree. On completion, Max merges all lane branches back into the sprint feature branch.
+**Strategy — clone fresh per task:**
+
+- On task start, clone the target GitHub repo into a temporary working directory: `/tmp/scrumbs/{taskId}/`
+- Run `npm install` (or the project's relevant install command) in the cloned directory
+- All Viktor tool calls operate within this directory
+- On task completion or cancellation, the directory is cleaned up
+
+**Rationale:** A fresh clone per task is simple, correct, and avoids stale state between tasks. The overhead (clone + install) is acceptable at MVP — it happens once per Viktor task. Caching `node_modules` across tasks is a Phase 2 optimisation.
+
+**GitHub token for git push:** Git push uses the user's GitHub OAuth token for authentication. The token is passed via HTTPS remote URL: `https://{githubToken}@github.com/{owner}/{repo}.git`. The token is never written to disk — it is used only in the clone URL and not stored in the repo's `.git/config`.
+
+**User isolation:** Each task uses a unique `taskId`-namespaced directory. Concurrent tasks for different users cannot access each other's working directories.
 
 ### Persona Architecture
 
@@ -496,7 +494,6 @@ export const viktor: Persona = {
     { ...gitCommit,   requiresApproval: true },
     { ...gitPush,     requiresApproval: true },
   ],
-  maxConcurrent: 3,
 }
 ```
 
@@ -507,7 +504,7 @@ Tools marked `requiresApproval: true` are handled by the agent loop's approval m
 Required before any multi-user exposure:
 
 - Each `AgentTask` has a configurable max token budget (default: 100k tokens input+output)
-- Agent service enforces a max of 3 concurrent tasks per user (matches parallel mode maximum)
+- Agent service enforces a max of 3 concurrent tasks per user
 - Tasks exceeding their token budget are automatically cancelled with status `'cancelled'` and `error: 'Token budget exceeded'`
 - `AgentTask.tokenUsage` (input + output tokens) logged after each loop iteration
 - Rate limit exceeded returns HTTP 429 with `Retry-After` header; surfaces as user-facing message in UI
@@ -599,7 +596,7 @@ Sprint
   projectId           references Project.id
   number              integer, not null  -- 1, 2, 3...
   goal                text  -- sprint goal statement
-  status              enum: planning | setup | development | review | qa | deploying | complete
+  status              enum: planning | development | review | qa | deploying | complete
   featureBranch       text, nullable  -- e.g. "sprint-3-user-auth"
   prUrl               text, nullable  -- GitHub PR URL once opened
   deployUrl           text, nullable  -- production deploy URL once live
@@ -637,7 +634,6 @@ AgentTask
   output              jsonb  -- final result (see AgentTask Output Shapes below)
   error               text, nullable  -- error message if failed or cancelled
   sessionId           text, unique  -- used for SSE reconnection
-  parentTaskId        uuid, nullable, references AgentTask.id  -- links parallel lanes to parent
   startedAt           timestamp, nullable
   completedAt         timestamp, nullable
   createdAt           timestamp
@@ -662,7 +658,7 @@ Conversation
   id                  uuid, primary key
   projectId           references Project.id
   sprintId            references Sprint.id, nullable
-  stage               enum: requirements | prd | planning | setup | development | review | qa | deploy | retro
+  stage               enum: requirements | prd | planning | development | review | qa | deploy | retro
   persona             enum: pablo | stella | viktor | rex | quinn | dex | max
   messages            jsonb  -- MessageRecord[] (see below)
   createdAt           timestamp
@@ -699,26 +695,16 @@ type StellaInput = {
   carryForwardStories?: StoryRecord[]        // unfinished stories from prior sprint
 }
 
-type MaxInput = {
-  persona: 'max'
-  stage: 'setup'
-  projectId: string
-  sprintId: string
-  sprintPlan: string                         // sprint plan markdown
-  githubRepo: string
-  defaultBranch: string
-}
-
 type ViktorInput = {
   persona: 'viktor'
   stage: 'development'
   projectId: string
   sprintId: string
-  stories: StoryRecord[]                     // stories assigned to this task (or lane)
+  stories: StoryRecord[]                     // stories for this sprint
   sprintPlan: string
   featureBranch: string                      // branch to commit to
-  worktreePath?: string                      // if parallel mode, the worktree path
-  executionMode: 'linear' | 'parallel'
+  githubRepo: string                         // e.g. "alecburrett/my-app"
+  githubToken: string                        // user's OAuth token for git push + GitHub API
 }
 
 type RexInput = {
@@ -729,6 +715,8 @@ type RexInput = {
   prUrl: string
   prdContent: string
   sprintPlan: string
+  githubRepo: string
+  githubToken: string                        // for PR creation via Octokit
 }
 
 type QuinnInput = {
@@ -737,6 +725,8 @@ type QuinnInput = {
   projectId: string
   sprintId: string
   featureBranch: string
+  githubRepo: string
+  githubToken: string                        // for repo operations
   testReportFromReview?: string              // Rex's review findings for context
 }
 
@@ -748,10 +738,11 @@ type DexInput = {
   githubRepo: string
   featureBranch: string
   defaultBranch: string
+  githubToken: string                        // for Actions workflow commit + status polling
 }
 
 type AgentTaskInput =
-  | PabloInput | StellaInput | MaxInput | ViktorInput
+  | PabloInput | StellaInput | ViktorInput
   | RexInput   | QuinnInput  | DexInput
 
 // --- Output shapes (returned from agent service) ---
@@ -889,7 +880,7 @@ AGENT_SERVICE_SECRET=  # Shared secret for web→agent auth (Bearer token)
 | Max     | Warm slate    | #64748B |
 | Coach   | Gold          | #EAB308 |
 
-### Terminal Panel (Viktor / Max stages)
+### Terminal Panel (Viktor stage)
 
 Dark background, monospace font (JetBrains Mono or similar). Event-type styling:
 
@@ -903,8 +894,6 @@ Dark background, monospace font (JetBrains Mono or similar). Event-type styling:
 - Approval gate: amber banner with pending operation and Approve / Reject buttons
 - Context summary: dim text — "Context summarised at ~72k tokens"
 - Retry: dim text — "Retrying API call (attempt 2/3)…"
-
-**Parallel mode:** terminal splits into 2–3 columns, each panel headed with a task label and lane branch name. Approval gates are per-column and independent.
 
 ### Sprint Board
 
@@ -928,18 +917,18 @@ Dark background, monospace font (JetBrains Mono or similar). Event-type styling:
 
 - GitHub OAuth via Auth.js v5
 - Create projects linked to a GitHub repo (1:1)
-- Full sprint workflow (7 stages) for new and returning projects
+- Full sprint workflow (6 stages) for new and returning projects
 - Pre-sprint Requirements + PRD flow (Pablo) for new projects
 - Returning user flow: start Sprint N+1 from retro or project dashboard
 - All 7 core personas, in-character, with correct underlying skills
 - Real-time SSE streaming at every stage (Anthropic SDK)
-- Terminal panel with tool use streaming (Viktor + Max stages)
+- Terminal panel with tool use streaming (Viktor stage)
 - Human-in-the-loop approval gates for file writes, commits, pushes
 - Agent task cancellation
 - Agent task reconnection (browser disconnect recovery, in-memory buffer)
 - Cost guard: token budget per task + concurrency limit per user + budget exhaustion UX
 - Context window management via rolling summarisation
-- Parallel agent execution (Max, up to 3 concurrent, via git worktrees)
+- Agent service filesystem model: fresh clone per task into `/tmp/scrumbs/{taskId}/`
 - GitHub integration: branches, commits, PRs, Actions status
 - Artifact storage: Railway Postgres (via Drizzle) + committed to repo, with current/superseded versioning
 - Handoff animations between personas
@@ -947,10 +936,11 @@ Dark background, monospace font (JetBrains Mono or similar). Event-type styling:
 - Multi-sprint projects (Sprint 1 → Sprint 2 → …)
 - Error handling: GitHub API, Anthropic API, agent restart, tool errors, budget, concurrency
 - Web → agent service auth via shared secret Bearer token
-- Mobile-responsive layout
 
 ### Out of Scope (Post-MVP)
 
+- Parallel agent execution (Max's parallel lanes, up to 3 concurrent, via git worktrees)
+- Mobile-responsive layout
 - Coach persona + custom skill creation
 - Multi-user / team collaboration
 - Billing + subscription tiers
@@ -962,6 +952,7 @@ Dark background, monospace font (JetBrains Mono or similar). Event-type styling:
 - Brownfield / existing repo ingestion mode
 - In-app rich text artifact editing (artifacts are read-only with "Edit in GitHub" link)
 - Durable event store (Redis/Postgres) for agent reconnection across service restarts
+- node_modules caching between agent tasks
 - Separate messages table for conversation pagination
 - Turborepo build orchestration
 
@@ -1128,8 +1119,8 @@ Stories are ordered by dependency. Each story is scoped to a single focused impl
 - Stella proposes: sprint goal, user stories with acceptance criteria, story point estimates
 - Stories rendered as cards in the conversation; artifact panel shows the sprint plan
 - User can request changes: add/remove/resize stories
-- "Approve Sprint Plan" confirms the plan and unlocks Dev Environment Setup
-- `Sprint.status` advances from `'planning'` to `'setup'` on approval
+- "Approve Sprint Plan" confirms the plan; feature branch is automatically created; sprint transitions to `'development'`
+- `Sprint.status` advances from `'planning'` to `'development'` on approval
 - Sprint plan committed to repo as `sprints/sprint-N.md`
 
 **Definition of Done:**
@@ -1138,55 +1129,25 @@ Stories are ordered by dependency. Each story is scoped to a single focused impl
 - [ ] `Sprint` record created with correct `number`, `goal`, and `status: 'planning'`
 - [ ] `Story` records created for each story in the sprint plan
 - [ ] Sprint plan committed to GitHub as `sprints/sprint-N.md` with `commitSha` stored
-- [ ] `Sprint.status` transitions to `'setup'` on approval (validated against state machine)
+- [ ] Feature branch created automatically via Octokit on plan approval; `Sprint.featureBranch` set in Postgres
+- [ ] `Sprint.status` transitions to `'development'` on approval (validated against state machine)
 - [ ] Backlog carry-forwards from prior sprints included in Stella's context
 - [ ] Unit test: story point sum is surfaced in artifact panel
+- [ ] Unit test: branch creation failure handled gracefully with error message
 
 ---
 
-### Epic 4 — Dev Environment Setup (Max)
+### Epic 4 — Development (Viktor)
 
 ---
 
-#### US-07: Branch Creation & Parallel Execution Planning (Max)
-
-> As a developer, I want Max to create the sprint feature branch and identify which stories can run in parallel so that Viktor can begin implementation efficiently.
-
-**Acceptance Criteria:**
-
-- Max is introduced via handoff animation from Stella
-- Max creates the feature branch in the GitHub repo (e.g. `sprint-3-user-auth`)
-- Max analyses the sprint plan and identifies parallelisable story groups — only stories touching completely disjoint file sets are eligible
-- For parallel stories: Max creates additional git worktrees, one per parallel lane (e.g. `sprint-3-user-auth/lane-1`)
-- Max presents the execution plan: which stories run sequentially, which in parallel (up to 3 lanes), and which lane branches map to which stories
-- Plan is rendered in the artifact panel
-- User can adjust the plan before confirming
-- "Confirm Setup" transitions sprint to `status: 'development'` and unlocks the Development stage
-
-**Definition of Done:**
-
-- [ ] GitHub feature branch created via Octokit with correct base branch
-- [ ] `Sprint.featureBranch` updated in Postgres
-- [ ] For parallel mode: lane branches created as sub-branches of the feature branch
-- [ ] Execution plan rendered clearly in artifact panel, distinguishing sequential and parallel tracks with lane branch assignments
-- [ ] User confirmation required before Viktor begins
-- [ ] `Sprint.status` transitions to `'development'` on confirmation (validated against state machine)
-- [ ] Unit test: branch creation failure (e.g. branch already exists) handled gracefully with error message
-- [ ] Unit test: stories with overlapping file sets are not marked as parallelisable
-
----
-
-### Epic 5 — Development (Viktor)
-
----
-
-#### US-08: TDD Implementation — Linear Mode (Viktor)
+#### US-07: TDD Implementation (Viktor)
 
 > As a developer, I want Viktor to implement sprint stories in order using test-driven development so that each feature is built with tests written before code.
 
 **Acceptance Criteria:**
 
-- Viktor is introduced via handoff animation from Max
+- Viktor is introduced via handoff animation (Max delivers a brief "branch ready" sign-off)
 - Terminal panel slides up from the bottom of the layout
 - Viktor's tool calls stream in real-time in the terminal panel with correct event-type styling
 - Viktor writes failing tests before any implementation code (red → green enforced)
@@ -1211,7 +1172,8 @@ Stories are ordered by dependency. Each story is scoped to a single focused impl
 
 **Definition of Done:**
 
-- [ ] `AgentTask` for Viktor created with `ViktorInput` shape, tracked, transitions `pending → running → completed`
+- [ ] Agent service clones the GitHub repo fresh per task into `/tmp/scrumbs/{taskId}/`, installs dependencies, then proceeds
+- [ ] `AgentTask` for Viktor created with `ViktorInput` shape (including `githubToken`), tracked, transitions `pending → running → completed`
 - [ ] SSE stream renders tool events in terminal panel in real-time
 - [ ] Approval gate pauses SSE stream and renders approval UI in terminal panel
 - [ ] Approval/rejection POSTed to `POST /tasks/:id/approve`; agent resumes or revises accordingly
@@ -1225,37 +1187,7 @@ Stories are ordered by dependency. Each story is scoped to a single focused impl
 
 ---
 
-#### US-09: TDD Implementation — Parallel Mode (Viktor + Max)
-
-> As a developer, I want Viktor to run up to three parallel implementation lanes simultaneously so that independent stories can be completed faster.
-
-**Acceptance Criteria:**
-
-- Parallel mode activates only when Max's execution plan identified parallelisable stories
-- Each parallel lane operates in its own git worktree on its own lane branch
-- Terminal panel splits into 2–3 columns, each headed with a task label and lane branch name
-- Each lane streams independently; tool events appear in the correct column
-- Approval gates in each lane are independent — approving lane 1 does not affect lane 2
-- If one lane fails, other lanes continue; failed lane shows error state in its column
-- On completion of all lanes, Max merges lane branches back into the sprint feature branch
-- If merge conflicts occur, Max reports them and loops Viktor in for resolution
-- Sprint board reflects all completed stories across all lanes
-- Sprint advances to `status: 'review'` when all lanes reach `completed` or `failed` and merge is complete
-
-**Definition of Done:**
-
-- [ ] Agent service executes `Promise.all` across 2–3 independent agent runs, each with its own worktree
-- [ ] Each agent run has its own `AgentTask` record (with `parentTaskId` linking to the orchestrating Max task) and SSE stream
-- [ ] Terminal panel splits into columns dynamically based on lane count
-- [ ] Approval UI identifies which lane the approval is for
-- [ ] Partial failure renders correctly — failed lane shows error, successful lanes show completion
-- [ ] Lane branch merge back into feature branch handled by Max with conflict detection
-- [ ] `Sprint.status` only advances to `'review'` when all lanes complete and merge succeeds
-- [ ] Integration test: two parallel agent tasks complete independently and both reach `completed`
-
----
-
-#### US-10: Agent Task Reconnection
+#### US-08: Agent Task Reconnection
 
 > As a developer, if my browser disconnects mid-task, I want to reconnect to the running agent stream so that I don't lose progress or leave agents running unmonitored.
 
@@ -1279,7 +1211,7 @@ Stories are ordered by dependency. Each story is scoped to a single focused impl
 
 ---
 
-#### US-11: Agent Task Cancellation
+#### US-09: Agent Task Cancellation
 
 > As a developer, I want to cancel a running agent task so that I can stop Viktor if he's heading in the wrong direction.
 
@@ -1306,11 +1238,11 @@ Stories are ordered by dependency. Each story is scoped to a single focused impl
 
 ---
 
-### Epic 6 — Code Review (Rex)
+### Epic 5 — Code Review (Rex)
 
 ---
 
-#### US-12: PR Creation & Code Review (Rex)
+#### US-10: PR Creation & Code Review (Rex)
 
 > As a developer, I want Rex to create a PR for the sprint branch and review the code against the sprint plan so that quality issues are caught before QA.
 
@@ -1338,11 +1270,11 @@ Stories are ordered by dependency. Each story is scoped to a single focused impl
 
 ---
 
-### Epic 7 — QA (Quinn)
+### Epic 6 — QA (Quinn)
 
 ---
 
-#### US-13: QA Sign-Off (Quinn)
+#### US-11: QA Sign-Off (Quinn)
 
 > As a developer, I want Quinn to run the full test suite and identify coverage gaps so that I can be confident before deploying.
 
@@ -1367,11 +1299,11 @@ Stories are ordered by dependency. Each story is scoped to a single focused impl
 
 ---
 
-### Epic 8 — Deploy (Dex)
+### Epic 7 — Deploy (Dex)
 
 ---
 
-#### US-14: CI/CD Pipeline Generation & Deploy (Dex)
+#### US-12: CI/CD Pipeline Generation & Deploy (Dex)
 
 > As a developer, I want Dex to trigger the GitHub Actions pipeline and guide me through deploying to production so that my sprint ships.
 
@@ -1401,11 +1333,11 @@ Stories are ordered by dependency. Each story is scoped to a single focused impl
 
 ---
 
-### Epic 9 — Retrospective (Stella)
+### Epic 8 — Retrospective (Stella)
 
 ---
 
-#### US-15: Sprint Retrospective (Stella)
+#### US-13: Sprint Retrospective (Stella)
 
 > As a developer, I want Stella to run a retrospective so that learnings are captured and the backlog is updated for the next sprint.
 
@@ -1429,11 +1361,11 @@ Stories are ordered by dependency. Each story is scoped to a single focused impl
 
 ---
 
-### Epic 10 — Returning User Flow
+### Epic 9 — Returning User Flow
 
 ---
 
-#### US-16: Start a New Sprint on an Existing Project
+#### US-14: Start a New Sprint on an Existing Project
 
 > As a developer returning to an existing project, I want to start a new sprint so that I can continue building on what I've shipped.
 
@@ -1443,7 +1375,7 @@ Stories are ordered by dependency. Each story is scoped to a single focused impl
 - System verifies the previous sprint is in `status: 'complete'` before allowing a new sprint (if a sprint is in progress, the user is taken to its current stage instead)
 - New Sprint record created with `number` incremented from the previous sprint
 - Stella is introduced and reads: the current PRD, the previous sprint's retro notes, and any carry-forward stories
-- Flow proceeds through the standard 7-stage sprint cycle
+- Flow proceeds through the standard 6-stage sprint cycle
 - Pablo is not involved unless the user explicitly requests a PRD update
 
 **Definition of Done:**
@@ -1456,17 +1388,17 @@ Stories are ordered by dependency. Each story is scoped to a single focused impl
 
 ---
 
-### Epic 11 — Cross-Cutting
+### Epic 10 — Cross-Cutting
 
 ---
 
-#### US-17: Real-Time Stage Progress Indicator
+#### US-15: Real-Time Stage Progress Indicator
 
 > As a developer, I want to see the sprint's current stage highlighted in a top progress bar so that I always know where I am in the workflow.
 
 **Acceptance Criteria:**
 
-- 7-stage progress bar at top of main workspace: Planning → Setup → Development → Review → QA → Deploy → Retro
+- 6-stage progress bar at top of main workspace: Planning → Development → Review → QA → Deploy → Retro
 - For new projects: Requirements and PRD shown as a pre-sprint indicator above the progress bar (completed once, then hidden)
 - Current stage highlighted; completed stages clickable for read-only review
 - Future stages greyed out with descriptive tooltip on hover
@@ -1482,7 +1414,7 @@ Stories are ordered by dependency. Each story is scoped to a single focused impl
 
 ---
 
-#### US-18: Persona Handoff Animation
+#### US-16: Persona Handoff Animation
 
 > As a developer, I want to see an animated handoff card when work passes between personas so that the workflow feels like a real team passing a baton.
 
@@ -1504,7 +1436,7 @@ Stories are ordered by dependency. Each story is scoped to a single focused impl
 
 ---
 
-#### US-19: Cost Guard & Rate Limiting
+#### US-17: Cost Guard & Rate Limiting
 
 > As a system operator, I want agent tasks to have a token budget and the agent service to be rate-limited so that runaway agents don't incur uncontrolled API costs.
 
@@ -1532,7 +1464,7 @@ Stories are ordered by dependency. Each story is scoped to a single focused impl
 
 ---
 
-#### US-20: Error Handling & Recovery
+#### US-18: Error Handling & Recovery
 
 > As a developer, I want errors during any stage to be surfaced clearly with recovery options so that I'm never stuck without a way forward.
 
@@ -1559,8 +1491,12 @@ Stories are ordered by dependency. Each story is scoped to a single focused impl
 
 ## 14. SaaS Evolution
 
-**Phase 2 — Multi-Sprint & Polish**
+**Phase 2 — Parallel Execution & Polish**
 
+- Parallel agent execution (Max's parallel lanes, up to 3 concurrent, via git worktrees)
+- Split terminal panels for parallel lanes
+- node_modules caching between agent tasks (persistent Railway volume)
+- Mobile-responsive layout
 - Sprint history view, velocity charts
 - Backlog management between sprints
 - Pablo available mid-sprint for PRD updates
@@ -1605,13 +1541,18 @@ Stories are ordered by dependency. Each story is scoped to a single focused impl
 - **Tailwind version:** v3 for MVP. v4 deferred until shadcn/ui confirms compatibility. ✅
 - **Web → agent auth:** Shared secret as Bearer token in Authorization header. ✅
 - **Event buffer durability:** In-memory for MVP. Tasks fail on agent restart; partial commits preserved. Durable store in Phase 2. ✅
-- **Parallel execution git strategy:** Each lane gets its own worktree/branch. Max merges lanes back after completion. Only file-disjoint stories are parallelised. ✅
+- **Parallel execution:** Deferred to Phase 2. MVP is linear only. ✅
+- **Dev Setup stage:** Removed. Branch creation is automated on sprint plan approval (Stella triggers it). Max introduces himself briefly at the start of Development. State machine is `planning → development` directly. ✅
+- **Mobile-responsive layout:** Deferred to Phase 2. Target user is a developer at a desktop. ✅
+- **Agent service filesystem model:** Fresh clone per task into `/tmp/scrumbs/{taskId}/`. Accept the overhead at MVP. Caching is Phase 2. ✅
+- **GitHub token in agent service:** Passed in task input (`githubToken` field on all relevant input shapes). Web service retrieves from `accounts` table before creating the task. ✅
+- **Token counting:** Character-count heuristic (`tokens ≈ chars / 4`). No `@anthropic-ai/tokenizer` dependency. ✅
 - **Conversation storage:** JSON array in `conversations.messages` for MVP. Separate `messages` table in Phase 2. ✅
 - **Context window management:** Rolling summarisation at 60% context window capacity using Haiku for summaries. ✅
 - **Sprint status transitions:** Explicit state machine (Section 5). Service layer validates all transitions. ✅
 - **Octokit PR creation:** Use `octokit.rest.pulls.create()` — no `createPullRequest` convenience method exists. ✅
-- **Pre-sprint flow:** Requirements and PRD are pre-sprint stages, not part of the 7-stage sprint progress bar. ✅
+- **Pre-sprint flow:** Requirements and PRD are pre-sprint stages, not part of the 6-stage sprint progress bar. ✅
 
 ---
 
-*End of PRD v0.9*
+*End of PRD v1.0*
