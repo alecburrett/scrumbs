@@ -2,7 +2,7 @@ import type { Db } from '@scrumbs/db'
 import { agentTasks } from '@scrumbs/db'
 import { eq } from 'drizzle-orm'
 import { SSEEmitter } from './sse.js'
-import { waitForApproval, resolveApproval } from './approval.js'
+import { waitForApproval } from './approval.js'
 import type { SSEEvent } from '@scrumbs/types'
 
 // In-memory map of active emitters (populated by the SSE route)
@@ -58,26 +58,27 @@ export async function runAgentTask(taskId: string, db: Db): Promise<void> {
     }
   }
 
+  const checkCancelled = async (): Promise<boolean> => {
+    if (await isTaskCancelled(db, taskId)) {
+      await db.update(agentTasks).set({ status: 'cancelled' }).where(eq(agentTasks.id, taskId))
+      emit({ type: 'done', payload: { cancelled: true } })
+      return true
+    }
+    return false
+  }
+
   try {
     // === DUMMY ECHO PERSONA ===
     // Steps 1 and 3 emit messages; step 2 requires approval (for testing the gate)
 
     // Step 1
-    if (await isTaskCancelled(db, taskId)) {
-      await db.update(agentTasks).set({ status: 'cancelled' }).where(eq(agentTasks.id, taskId))
-      emit({ type: 'done', payload: { cancelled: true } })
-      return
-    }
+    if (await checkCancelled()) return
 
     emit({ type: 'message', payload: 'Echo: step 1 — starting task' })
     await new Promise((r) => setTimeout(r, 500))
 
     // Step 2 — approval gate
-    if (await isTaskCancelled(db, taskId)) {
-      await db.update(agentTasks).set({ status: 'cancelled' }).where(eq(agentTasks.id, taskId))
-      emit({ type: 'done', payload: { cancelled: true } })
-      return
-    }
+    if (await checkCancelled()) return
 
     emit({
       type: 'approval_required',
@@ -102,11 +103,7 @@ export async function runAgentTask(taskId: string, db: Db): Promise<void> {
     await new Promise((r) => setTimeout(r, 500))
 
     // Step 3
-    if (await isTaskCancelled(db, taskId)) {
-      await db.update(agentTasks).set({ status: 'cancelled' }).where(eq(agentTasks.id, taskId))
-      emit({ type: 'done', payload: { cancelled: true } })
-      return
-    }
+    if (await checkCancelled()) return
 
     emit({ type: 'message', payload: 'Echo: step 3 — task complete' })
     await new Promise((r) => setTimeout(r, 500))
