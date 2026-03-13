@@ -23,7 +23,7 @@ const fastify = Fastify({ logger: true })
 
 // Auth hook — validates shared secret on all routes except /health
 fastify.addHook('preHandler', async (request, reply) => {
-  if (request.url === '/health') return
+  if (request.routeOptions?.url === '/health') return
 
   const raw = request.headers['x-agent-secret']
   if (Array.isArray(raw)) {
