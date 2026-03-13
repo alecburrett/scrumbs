@@ -12,6 +12,7 @@ const CreateTaskSchema = z.object({
   sprintId: z.string().min(1),
   personaName: z.enum(personaNameEnum.enumValues),
   input: z.record(z.unknown()).default({}),
+  userId: z.string().min(1),
 })
 
 export const taskRoutes: FastifyPluginAsync<{ db: Db }> = async (fastify, opts) => {
@@ -28,7 +29,7 @@ export const taskRoutes: FastifyPluginAsync<{ db: Db }> = async (fastify, opts) 
           details: parseResult.error.flatten(),
         })
       }
-      const { sprintId, personaName, input } = parseResult.data
+      const { sprintId, personaName, input, userId } = parseResult.data
       const sessionId = randomUUID()
 
       const [task] = await db
@@ -37,7 +38,7 @@ export const taskRoutes: FastifyPluginAsync<{ db: Db }> = async (fastify, opts) 
         .returning()
 
       // Fire and forget — agent loop runs asynchronously
-      runAgentTask(task.id, db).catch((err) => {
+      runAgentTask(task.id, db, personaName, input, userId).catch((err) => {
         fastify.log.error({ taskId: task.id, err }, 'Agent task failed')
       })
 
