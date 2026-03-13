@@ -2,12 +2,14 @@ FROM node:22-slim AS base
 WORKDIR /app
 
 # Install all dependencies (including dev for build)
+# All workspace package.json files must be present for npm ci to resolve
 FROM base AS deps
 COPY package.json package-lock.json ./
 COPY packages/db/package.json packages/db/
 COPY packages/types/package.json packages/types/
 COPY packages/personas/package.json packages/personas/
 COPY apps/agent/package.json apps/agent/
+COPY apps/web/package.json apps/web/
 RUN npm ci
 
 # Build all packages
@@ -26,6 +28,7 @@ COPY packages/db/package.json packages/db/
 COPY packages/types/package.json packages/types/
 COPY packages/personas/package.json packages/personas/
 COPY apps/agent/package.json apps/agent/
+COPY apps/web/package.json apps/web/
 RUN npm ci --omit=dev
 
 # Production
