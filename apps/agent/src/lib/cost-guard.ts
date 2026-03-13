@@ -1,6 +1,6 @@
 import type { Db } from '@scrumbs/db'
-import { agentTasks } from '@scrumbs/db'
-import { eq, and, inArray } from 'drizzle-orm'
+import { agentTasks, sprints, projects } from '@scrumbs/db'
+import { eq, and, inArray, sql } from 'drizzle-orm'
 
 const MAX_CONCURRENT_PER_USER = 3
 
@@ -22,16 +22,19 @@ export async function checkConcurrencyLimit(
   db: Db,
   userId: string
 ): Promise<void> {
-  // Count running tasks for this user's sprints
   const runningTasks = await db
     .select({ id: agentTasks.id })
     .from(agentTasks)
+    .innerJoin(sprints, eq(agentTasks.sprintId, sprints.id))
+    .innerJoin(projects, eq(sprints.projectId, projects.id))
     .where(
-      inArray(agentTasks.status, ['running', 'waiting_approval'])
+      and(
+        inArray(agentTasks.status, ['running', 'waiting_approval']),
+        eq(projects.userId, userId)
+      )
     )
+    .limit(MAX_CONCURRENT_PER_USER)
 
-  // Note: in production, join to sprints/projects to filter by userId
-  // For now, global concurrency check is sufficient
   if (runningTasks.length >= MAX_CONCURRENT_PER_USER) {
     throw new ConcurrencyLimitError(userId)
   }
@@ -59,15 +62,8 @@ export async function incrementTokensUsed(
   taskId: string,
   tokens: number
 ): Promise<void> {
-  const [task] = await db
-    .select({ tokensUsed: agentTasks.tokensUsed })
-    .from(agentTasks)
-    .where(eq(agentTasks.id, taskId))
-
-  if (!task) return
-
   await db
     .update(agentTasks)
-    .set({ tokensUsed: task.tokensUsed + tokens })
+    .set({ tokensUsed: sql`${agentTasks.tokensUsed} + ${tokens}` })
     .where(eq(agentTasks.id, taskId))
 }

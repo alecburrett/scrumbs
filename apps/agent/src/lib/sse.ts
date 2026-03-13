@@ -14,7 +14,10 @@ export class SSEEmitter {
   }
 
   emit(event: SSEEvent): void {
-    buffers.get(this.sessionId)!.push(event)
+    const buffer = buffers.get(this.sessionId)
+    if (buffer) {
+      buffer.push(event)
+    }
     this.res.write(`data: ${JSON.stringify(event)}\n\n`)
   }
 
