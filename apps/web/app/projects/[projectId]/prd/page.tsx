@@ -1,5 +1,9 @@
 import { auth } from '@/auth'
 import { redirect } from 'next/navigation'
+import { db } from '@/lib/db'
+import { artifacts } from '@scrumbs/db'
+import { eq, and, desc } from 'drizzle-orm'
+import { PrdClient } from './client'
 
 export default async function PrdPage({
   params,
@@ -10,23 +14,20 @@ export default async function PrdPage({
   const session = await auth()
   if (!session) redirect('/')
 
+  // Try to find existing requirements artifact for this project
+  // Requirements artifacts are linked via agent tasks -> sprints -> projects,
+  // but for pre-sprint stages we look for any active requirements artifact
+  const [reqArtifact] = await db
+    .select()
+    .from(artifacts)
+    .where(and(eq(artifacts.type, 'requirements'), eq(artifacts.status, 'active')))
+    .orderBy(desc(artifacts.createdAt))
+    .limit(1)
+
   return (
-    <div className="flex h-full">
-      <div className="flex-1 border-r border-slate-800 flex flex-col">
-        <div className="p-4 border-b border-slate-800 flex items-center gap-2">
-          <span className="w-3 h-3 rounded-full" style={{ backgroundColor: '#F59E0B' }} />
-          <span className="font-medium">Pablo — Product Owner</span>
-        </div>
-        <div className="flex-1 overflow-y-auto p-4">
-          <p className="text-slate-400 text-sm">
-            Pablo will synthesize your requirements into a Product Requirements Document.
-          </p>
-        </div>
-      </div>
-      <div className="w-1/2 p-6">
-        <h2 className="text-lg font-semibold mb-4 text-slate-300">PRD</h2>
-        <p className="text-slate-500 text-sm">Your PRD will appear here.</p>
-      </div>
-    </div>
+    <PrdClient
+      projectId={projectId}
+      existingRequirements={reqArtifact?.contentMd}
+    />
   )
 }

@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { PERSONA_COLOURS, PERSONA_DISPLAY_NAMES } from '@scrumbs/personas'
+import { PERSONA_COLOURS, PERSONA_DISPLAY_NAMES } from '@/lib/persona-constants'
 import type { PersonaName } from '@scrumbs/types'
 
 interface HandoffCardProps {
