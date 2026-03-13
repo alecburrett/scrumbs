@@ -61,15 +61,8 @@ export async function incrementTokensUsed(
   taskId: string,
   tokens: number
 ): Promise<void> {
-  const [task] = await db
-    .select({ tokensUsed: agentTasks.tokensUsed })
-    .from(agentTasks)
-    .where(eq(agentTasks.id, taskId))
-
-  if (!task) return
-
   await db
     .update(agentTasks)
-    .set({ tokensUsed: task.tokensUsed + tokens })
+    .set({ tokensUsed: sql`${agentTasks.tokensUsed} + ${tokens}` })
     .where(eq(agentTasks.id, taskId))
 }
