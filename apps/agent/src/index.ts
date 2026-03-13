@@ -13,6 +13,11 @@ if (!process.env.AGENT_SERVICE_SECRET || process.env.AGENT_SERVICE_SECRET.length
 // secret comparison so timingSafeEqual always receives equal-length digests and
 // the expected secret length is never leaked via timing.
 const HMAC_KEY = randomBytes(32)
+// Pre-hash the expected secret once — safe because the startup validation above
+// guarantees AGENT_SERVICE_SECRET is present and meets the length requirement.
+const EXPECTED_BUF = createHmac('sha256', HMAC_KEY)
+  .update(process.env.AGENT_SERVICE_SECRET!)
+  .digest()
 
 const fastify = Fastify({ logger: true })
 
@@ -24,17 +29,13 @@ fastify.addHook('preHandler', async (request, reply) => {
   if (Array.isArray(raw)) {
     return reply.status(400).send({ error: 'Bad Request' })
   }
-  const provided = raw
-  const expected = process.env.AGENT_SERVICE_SECRET!
 
-  if (!provided) {
+  if (!raw) {
     return reply.status(401).send({ error: 'Unauthorized' })
   }
 
-  const providedBuf = createHmac('sha256', HMAC_KEY).update(provided).digest()
-  const expectedBuf = createHmac('sha256', HMAC_KEY).update(expected).digest()
-
-  if (!timingSafeEqual(providedBuf, expectedBuf)) {
+  const providedBuf = createHmac('sha256', HMAC_KEY).update(raw).digest()
+  if (!timingSafeEqual(providedBuf, EXPECTED_BUF)) {
     return reply.status(401).send({ error: 'Unauthorized' })
   }
 })
