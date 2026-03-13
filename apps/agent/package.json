@@ -1,0 +1,25 @@
+{
+  "name": "@scrumbs/agent",
+  "version": "0.0.1",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "tsx watch src/index.ts",
+    "build": "tsc",
+    "start": "node dist/index.js"
+  },
+  "dependencies": {
+    "@anthropic-ai/sdk": "~0.39.x",
+    "@octokit/rest": "~21.x",
+    "@scrumbs/db": "*",
+    "@scrumbs/types": "*",
+    "drizzle-orm": "~0.36.x",
+    "fastify": "~5.x",
+    "postgres": "~3.4.x"
+  },
+  "devDependencies": {
+    "@types/node": "~20.x",
+    "tsx": "~4.x",
+    "typescript": "~5.4.x"
+  }
+}

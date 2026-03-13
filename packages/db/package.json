@@ -1,0 +1,27 @@
+{
+  "name": "@scrumbs/db",
+  "version": "0.0.1",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "import": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    }
+  },
+  "scripts": {
+    "build": "tsc",
+    "migrate": "tsx src/migrate.ts",
+    "generate": "drizzle-kit generate"
+  },
+  "dependencies": {
+    "drizzle-orm": "~0.36.x",
+    "postgres": "~3.4.x"
+  },
+  "devDependencies": {
+    "@types/node": "~20.x",
+    "drizzle-kit": "~0.28.x",
+    "tsx": "~4.x",
+    "typescript": "~5.4.x"
+  }
+}

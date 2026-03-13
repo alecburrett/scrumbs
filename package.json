@@ -1,0 +1,14 @@
+{
+  "name": "scrumbs",
+  "version": "0.0.1",
+  "private": true,
+  "workspaces": ["packages/*", "apps/*"],
+  "scripts": {
+    "build": "npm run build --workspaces",
+    "dev": "npm run dev --workspace=apps/web",
+    "db:migrate": "npm run migrate --workspace=packages/db"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}
