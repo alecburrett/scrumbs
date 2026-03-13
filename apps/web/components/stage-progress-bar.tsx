@@ -18,7 +18,7 @@ const STAGES: { key: Stage; label: string }[] = [
 ]
 
 interface StageProgressBarProps {
-  currentStage: Stage
+  currentStage?: Stage
 }
 
 export function StageProgressBar({ currentStage }: StageProgressBarProps) {
