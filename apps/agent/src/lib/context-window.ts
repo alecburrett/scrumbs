@@ -31,7 +31,7 @@ export async function maybeSummariseHistory(
     messages: [
       {
         role: 'user',
-        content: `Summarise this conversation history concisely, preserving key decisions and context:\n\n${JSON.stringify(toSummarise)}`,
+        content: `Summarise this conversation history concisely, preserving:\n- Files created or modified (with paths)\n- Test results (pass/fail)\n- Story progress (which stories started, completed, blocked)\n- Pending decisions or open questions\n\n${JSON.stringify(toSummarise)}`,
       },
     ],
   })
@@ -42,12 +42,21 @@ export async function maybeSummariseHistory(
       : ''
 
   const summaryMessage: Anthropic.MessageParam = {
-    role: 'user',
+    role: 'assistant',
     content: `[Previous conversation summary]\n${summaryText}`,
   }
 
-  return {
-    messages: [summaryMessage, ...toKeep],
-    summarised: true,
+  // Ensure alternating roles after summary
+  if (toKeep.length > 0 && toKeep[0].role === 'assistant') {
+    return {
+      messages: [
+        summaryMessage,
+        { role: 'user', content: 'Continue from where we left off.' },
+        ...toKeep,
+      ],
+      summarised: true,
+    }
   }
+
+  return { messages: [summaryMessage, ...toKeep], summarised: true }
 }
