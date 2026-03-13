@@ -1,11 +1,11 @@
-import NextAuth from 'next-auth'
+import NextAuth, { type NextAuthResult } from 'next-auth'
 import GitHub from 'next-auth/providers/github'
 import { DrizzleAdapter } from '@auth/drizzle-adapter'
 import { createDb } from '@scrumbs/db'
 
 const db = createDb(process.env.DATABASE_URL!)
 
-export const { handlers, auth, signIn, signOut } = NextAuth({
+const result: NextAuthResult = NextAuth({
   adapter: DrizzleAdapter(db),
   providers: [
     GitHub({
@@ -25,3 +25,5 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
     },
   },
 })
+
+export const { handlers, auth, signIn, signOut } = result
