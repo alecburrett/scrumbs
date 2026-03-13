@@ -79,6 +79,7 @@ export async function runAgentTask(taskId: string, db: Db): Promise<void> {
       return
     }
 
+    const approvalPromise = waitForApproval(taskId) // register gate FIRST
     emit({
       type: 'approval_required',
       payload: {
@@ -88,7 +89,7 @@ export async function runAgentTask(taskId: string, db: Db): Promise<void> {
     })
 
     await db.update(agentTasks).set({ status: 'waiting_approval' }).where(eq(agentTasks.id, taskId))
-    const approved = await waitForApproval(taskId)
+    const approved = await approvalPromise // now wait
     await db.update(agentTasks).set({ status: 'running' }).where(eq(agentTasks.id, taskId))
 
     if (!approved) {
@@ -130,5 +131,7 @@ export async function runAgentTask(taskId: string, db: Db): Promise<void> {
     emit({ type: 'done', payload: { success: false } })
   } finally {
     unregisterEmitter(taskId)
+    // Allow 30s for reconnect replay, then clean up
+    setTimeout(() => SSEEmitter.clearBuffer(sessionId), 30_000)
   }
 }
