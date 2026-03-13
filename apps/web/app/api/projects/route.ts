@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { auth } from '@/auth'
 import { db } from '@/lib/db'
 import { projects } from '@scrumbs/db'
+import { eq } from 'drizzle-orm'
 
 export async function POST(req: NextRequest) {
   const session = await auth()
@@ -38,7 +39,6 @@ export async function GET(_req: NextRequest) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 
-  const { eq } = await import('drizzle-orm')
   const userProjects = await db
     .select()
     .from(projects)
