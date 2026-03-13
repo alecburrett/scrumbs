@@ -6,25 +6,34 @@ import { randomUUID } from 'node:crypto'
 import { runAgentTask } from '../lib/agent-loop.js'
 import { SSEEmitter } from '../lib/sse.js'
 import { resolveApproval } from '../lib/approval.js'
+import { z } from 'zod'
+
+const CreateTaskSchema = z.object({
+  sprintId: z.string().min(1),
+  personaName: z.enum(['pablo', 'stella', 'viktor', 'rex', 'quinn', 'dex', 'max']),
+  input: z.record(z.unknown()).default({}),
+})
 
 export const taskRoutes: FastifyPluginAsync<{ db: Db }> = async (fastify, opts) => {
   const { db } = opts
 
   // POST /tasks — create and start a task
-  fastify.post<{ Body: { sprintId: string; personaName: string; input: unknown } }>(
+  fastify.post(
     '/',
     async (request, reply) => {
-      const { sprintId, personaName, input } = request.body
+      const parseResult = CreateTaskSchema.safeParse(request.body)
+      if (!parseResult.success) {
+        return reply.status(400).send({
+          error: 'Invalid request body',
+          details: parseResult.error.flatten(),
+        })
+      }
+      const { sprintId, personaName, input } = parseResult.data
       const sessionId = randomUUID()
 
       const [task] = await db
         .insert(agentTasks)
-        .values({
-          sprintId,
-          personaName: personaName as any,
-          sessionId,
-          inputJson: input as any,
-        })
+        .values({ sprintId, personaName, sessionId, inputJson: input })
         .returning()
 
       // Fire and forget — agent loop runs asynchronously
