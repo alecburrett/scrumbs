@@ -16,8 +16,8 @@ function loadSkills(): Record<string, string> {
         skills[name] = fs.readFileSync(path.join(SKILLS_DIR, file), 'utf-8')
       }
     }
-  } catch {
-    // Skills directory may not exist in dist — that's OK
+  } catch (err) {
+    console.warn(`[skill-loader] Failed to load skills from ${SKILLS_DIR}:`, err)
   }
 
   return Object.freeze(skills)

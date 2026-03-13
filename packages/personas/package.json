@@ -11,7 +11,8 @@
     }
   },
   "scripts": {
-    "build": "tsc"
+    "build": "tsc",
+    "postbuild": "cp -r src/skills dist/skills"
   },
   "dependencies": {
     "@scrumbs/types": "*"
