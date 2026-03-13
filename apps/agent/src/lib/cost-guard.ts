@@ -33,6 +33,7 @@ export async function checkConcurrencyLimit(
         eq(projects.userId, userId)
       )
     )
+    .limit(MAX_CONCURRENT_PER_USER)
 
   if (runningTasks.length >= MAX_CONCURRENT_PER_USER) {
     throw new ConcurrencyLimitError(userId)
