@@ -209,6 +209,16 @@ export async function runAgentTask(
       const totalTokens = (response.usage?.input_tokens ?? 0) + (response.usage?.output_tokens ?? 0)
       await incrementTokensUsed(db, taskId, totalTokens)
 
+      // Check if usage exceeds 80% of budget and warn
+      const [taskState] = await db.select({ tokensBudget: agentTasks.tokensBudget, tokensUsed: agentTasks.tokensUsed })
+        .from(agentTasks).where(eq(agentTasks.id, taskId))
+      if (taskState && taskState.tokensBudget > 0 && taskState.tokensUsed > taskState.tokensBudget * 0.8) {
+        emit({ type: 'error', payload: {
+          warning: true,
+          message: `Token budget at ${Math.round((taskState.tokensUsed / taskState.tokensBudget) * 100)}% — task will auto-cancel at 100%`
+        }})
+      }
+
       // Process response content blocks
       const textBlocks: string[] = []
       const toolUseBlocks: Array<{ type: 'tool_use'; id: string; name: string; input: Record<string, unknown> }> = []
