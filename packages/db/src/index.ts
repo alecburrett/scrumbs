@@ -21,7 +21,6 @@ export function createDb(connectionString: string) {
 
 export type Db = ReturnType<typeof createDb>
 
-export { createDb }
 export * from './schema/auth.js'
 export * from './schema/projects.js'
 export * from './schema/agent-tasks.js'
