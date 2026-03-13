@@ -3,7 +3,7 @@ import type { Db } from '@scrumbs/db'
 import { agentTasks } from '@scrumbs/db'
 import { eq } from 'drizzle-orm'
 import { randomUUID } from 'node:crypto'
-import { runAgentTask } from '../lib/agent-loop.js'
+import { runAgentTask, registerEmitter, unregisterEmitter } from '../lib/agent-loop.js'
 import { SSEEmitter } from '../lib/sse.js'
 import { resolveApproval } from '../lib/approval.js'
 
@@ -49,24 +49,26 @@ export const taskRoutes: FastifyPluginAsync<{ db: Db }> = async (fastify, opts) 
         Connection: 'keep-alive',
       })
 
-      const emitter = new SSEEmitter(sessionId ?? id, reply.raw)
+      const sid = sessionId ?? id
 
-      // Replay buffered events for reconnection
-      if (sessionId) {
-        SSEEmitter.replay(sessionId, reply.raw)
-      }
+      // Replay FIRST, then register — prevents out-of-order events
+      SSEEmitter.replay(sid, reply.raw)
 
-      // Keep connection alive
+      const emitter = new SSEEmitter(sid, reply.raw)
+      registerEmitter(id, emitter)
+
       const keepAlive = setInterval(() => {
         reply.raw.write(': keep-alive\n\n')
       }, 15000)
 
-      request.socket.on('close', () => {
-        clearInterval(keepAlive)
+      // Resolve on close — don't hang forever
+      await new Promise<void>((resolve) => {
+        request.socket.on('close', () => {
+          clearInterval(keepAlive)
+          unregisterEmitter(id)
+          resolve()
+        })
       })
-
-      // Don't send a Fastify reply — SSE is manually managed
-      await new Promise(() => {}) // hang forever
     }
   )
 
