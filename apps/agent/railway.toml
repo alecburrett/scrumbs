@@ -1,5 +1,6 @@
 [build]
 dockerfilePath = "apps/agent/Dockerfile"
+buildCommand = "npm run build -w @scrumbs/types && npm run build -w @scrumbs/db && npm run build -w @scrumbs/personas && npm run build -w @scrumbs/agent"
 
 [deploy]
 healthcheckPath = "/health"
