@@ -59,6 +59,13 @@ export function TerminalEventRow({ event }: TerminalEventProps) {
       )
 
     case 'error':
+      if (payload?.warning) {
+        return (
+          <div className="text-amber-400 font-mono text-sm">
+            [warning] {String(payload?.message ?? payload)}
+          </div>
+        )
+      }
       return (
         <div className="text-red-400 font-mono text-sm">
           [error] {String(payload?.message ?? payload)}
