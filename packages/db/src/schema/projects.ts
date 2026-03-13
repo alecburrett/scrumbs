@@ -1,4 +1,4 @@
-import { pgTable, text, timestamp, integer, pgEnum } from 'drizzle-orm/pg-core'
+import { pgTable, text, timestamp, integer, pgEnum, unique } from 'drizzle-orm/pg-core'
 import { users } from './auth'
 
 export const sprintStatusEnum = pgEnum('sprint_status', [
@@ -37,7 +37,9 @@ export const sprints = pgTable('sprint', {
   featureBranch: text('feature_branch'),
   createdAt: timestamp('created_at').notNull().defaultNow(),
   completedAt: timestamp('completed_at'),
-})
+}, (t) => ({
+  projectNumberUnique: unique().on(t.projectId, t.number),
+}))
 
 export const stories = pgTable('story', {
   id: text('id').notNull().primaryKey().$defaultFn(() => crypto.randomUUID()),
