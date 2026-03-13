@@ -32,6 +32,7 @@ export function StageWorkspace({
   const [taskId, setTaskId] = useState<string | null>(null)
   const [pendingApproval, setPendingApproval] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [budgetWarning, setBudgetWarning] = useState<string | null>(null)
   const bottomRef = useRef<HTMLDivElement>(null)
   const onCompleteRef = useRef(onComplete)
   useEffect(() => { onCompleteRef.current = onComplete }, [onComplete])
@@ -43,6 +44,91 @@ export function StageWorkspace({
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' })
   }, [messages])
 
+  // Connect to an existing SSE stream for a given task
+  const connectToStream = useCallback(async (tid: string, sid: string) => {
+    setTaskId(tid)
+    setStatus('connecting')
+
+    const configRes = await fetch('/api/config')
+    if (!configRes.ok) throw new Error('Failed to load config')
+    const { agentServiceUrl } = await configRes.json()
+
+    const url = `${agentServiceUrl}/tasks/${tid}/stream?sessionId=${sid}`
+    const es = new EventSource(url)
+
+    es.onopen = () => setStatus('connected')
+
+    es.onmessage = (e) => {
+      try {
+        const event = JSON.parse(e.data) as SSEEvent
+        if (event.type === 'message') {
+          const payload = event.payload as { role?: string; content?: string }
+          if (payload.content) {
+            setMessages((prev) => [...prev, { role: payload.role ?? 'assistant', content: payload.content! }])
+            if (payload.role !== 'user' && payload.content.length > 200) {
+              setArtifact(payload.content)
+            }
+          }
+        }
+        if (event.type === 'approval_required') {
+          setPendingApproval(true)
+        }
+        if (event.type === 'done') {
+          setStatus('done')
+          es.close()
+          const payload = event.payload as Record<string, unknown> | undefined
+          onCompleteRef.current?.(payload)
+        }
+        if (event.type === 'error') {
+          const payload = event.payload as { warning?: boolean; message?: string }
+          if (payload.warning) {
+            setBudgetWarning(payload.message ?? 'Token budget warning')
+          } else {
+            setError(payload.message ?? 'An error occurred')
+          }
+        }
+        if (event.type === 'context_summary') {
+          const payload = event.payload as { content?: string }
+          if (payload.content) {
+            setMessages((prev) => [...prev, { role: 'assistant', content: payload.content! }])
+            if (payload.content.length > 200) {
+              setArtifact(payload.content)
+            }
+          }
+        }
+      } catch {
+        // ignore malformed events
+      }
+    }
+
+    es.onerror = () => {
+      setStatus((prev) => (prev === 'done' ? 'done' : 'error'))
+      es.close()
+    }
+  }, [])
+
+  // Auto-reconnect: check for an existing running task on mount
+  useEffect(() => {
+    let cancelled = false
+    async function checkActiveTask() {
+      try {
+        const params = new URLSearchParams()
+        if (sprintId) params.set('sprintId', sprintId)
+        if (personaName) params.set('personaName', personaName)
+        const res = await fetch(`/api/projects/${projectId}/active-task?${params.toString()}`)
+        if (!res.ok || cancelled) return
+        const { taskId: tid, sessionId: sid } = await res.json()
+        if (!cancelled && tid && sid) {
+          await connectToStream(tid, sid)
+        }
+      } catch {
+        // No active task or network error — stay idle
+      }
+    }
+    checkActiveTask()
+    return () => { cancelled = true }
+  }, [projectId, sprintId, personaName, connectToStream])
+
   const handleStart = useCallback(async () => {
     setStatus('connecting')
     setError(null)
@@ -50,11 +136,6 @@ export function StageWorkspace({
     setArtifact(null)
 
     try {
-      // Fetch agent service URL
-      const configRes = await fetch('/api/config')
-      if (!configRes.ok) throw new Error('Failed to load config')
-      const { agentServiceUrl } = await configRes.json()
-
       // Create the agent task
       const taskRes = await fetch(`/api/projects/${projectId}/tasks`, {
         method: 'POST',
@@ -71,63 +152,12 @@ export function StageWorkspace({
       }
 
       const { taskId: tid, sessionId } = await taskRes.json()
-      setTaskId(tid)
-
-      // Connect to SSE stream
-      const url = `${agentServiceUrl}/tasks/${tid}/stream?sessionId=${sessionId}`
-      const es = new EventSource(url)
-
-      es.onopen = () => setStatus('connected')
-
-      es.onmessage = (e) => {
-        try {
-          const event = JSON.parse(e.data) as SSEEvent
-          if (event.type === 'message') {
-            const payload = event.payload as { role?: string; content?: string }
-            if (payload.content) {
-              setMessages((prev) => [...prev, { role: payload.role ?? 'assistant', content: payload.content! }])
-              // Use the longest assistant message as artifact content
-              if (payload.role !== 'user' && payload.content.length > 200) {
-                setArtifact(payload.content)
-              }
-            }
-          }
-          if (event.type === 'approval_required') {
-            setPendingApproval(true)
-          }
-          if (event.type === 'done') {
-            setStatus('done')
-            es.close()
-            const payload = event.payload as Record<string, unknown> | undefined
-            onCompleteRef.current?.(payload)
-          }
-          if (event.type === 'error') {
-            const payload = event.payload as { message?: string }
-            setError(payload.message ?? 'An error occurred')
-          }
-          if (event.type === 'context_summary') {
-            const payload = event.payload as { content?: string }
-            if (payload.content) {
-              setMessages((prev) => [...prev, { role: 'assistant', content: payload.content! }])
-              if (payload.content.length > 200) {
-                setArtifact(payload.content)
-              }
-            }
-          }
-        } catch {
-          // ignore malformed events
-        }
-      }
-
-      es.onerror = () => {
-        setStatus((prev) => (prev === 'done' ? 'done' : 'error'))
-        es.close()
-      }
+      await connectToStream(tid, sessionId)
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Unknown error')
       setStatus('error')
     }
-  }, [projectId, sprintId, personaName, stage, input])
+  }, [projectId, sprintId, personaName, stage, input, connectToStream])
 
   const statusDot = {
     idle: 'bg-slate-500',
@@ -162,6 +192,11 @@ export function StageWorkspace({
               taskId={taskId ?? undefined}
             />
           ))}
+          {budgetWarning && (
+            <div className="p-3 bg-amber-900/30 border border-amber-800/50 rounded-lg text-sm text-amber-400">
+              {budgetWarning}
+            </div>
+          )}
           {error && (
             <div className="p-3 bg-red-900/30 border border-red-800/50 rounded-lg text-sm text-red-400">
               {error}
