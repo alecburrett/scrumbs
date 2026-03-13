@@ -1,11 +1,15 @@
-import NextAuth, { type NextAuthResult } from 'next-auth'
+import NextAuth from 'next-auth'
 import GitHub from 'next-auth/providers/github'
 import { DrizzleAdapter } from '@auth/drizzle-adapter'
 import { createDb } from '@scrumbs/db'
 
 const db = createDb(process.env.DATABASE_URL!)
 
-const result: NextAuthResult = NextAuth({
+// next-auth v5 beta: 'auth' type references next-auth/lib internals which
+// TypeScript cannot name under isolatedModules — suppress the portability error.
+// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+// @ts-ignore
+export const { handlers, auth, signIn, signOut } = NextAuth({
   adapter: DrizzleAdapter(db),
   providers: [
     GitHub({
@@ -25,5 +29,3 @@ const result: NextAuthResult = NextAuth({
     },
   },
 })
-
-export const { handlers, auth, signIn, signOut } = result
