@@ -1,6 +1,7 @@
 import { execFile } from 'node:child_process'
 import { promisify } from 'node:util'
 import { registerTool } from './index.js'
+import { z } from 'zod'
 
 const execFileAsync = promisify(execFile)
 
@@ -21,8 +22,13 @@ registerTool({
     required: ['command'],
   },
   requiresApproval: true,
-  async execute({ command, args = [] }, context) {
-    const { stdout, stderr } = await execFileAsync(command as string, args as string[], {
+  async execute(input, context) {
+    const { command, args } = z.object({
+      command: z.string(),
+      args: z.array(z.string()).default([]),
+    }).parse(input)
+
+    const { stdout, stderr } = await execFileAsync(command, args, {
       cwd: context.workspaceDir,
       env: context.env,
       timeout: 60_000,

@@ -1,6 +1,7 @@
 import fs from 'node:fs/promises'
 import { registerTool } from './index.js'
 import { validateWorkspacePath } from '../workspace.js'
+import { z } from 'zod'
 
 registerTool({
   name: 'read_file',
@@ -13,8 +14,9 @@ registerTool({
     required: ['path'],
   },
   requiresApproval: false,
-  async execute({ path: filePath }, context) {
-    const resolved = validateWorkspacePath(context.workspaceDir, filePath as string)
+  async execute(input, context) {
+    const { path: filePath } = z.object({ path: z.string() }).parse(input)
+    const resolved = validateWorkspacePath(context.workspaceDir, filePath)
     const content = await fs.readFile(resolved, 'utf-8')
     return content
   },
