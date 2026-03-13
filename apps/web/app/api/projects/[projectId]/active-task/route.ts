@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { auth } from '@/auth'
 import { db } from '@/lib/db'
-import { projects, sprints, agentTasks } from '@scrumbs/db'
+import { projects, agentTasks } from '@scrumbs/db'
 import { eq, and, inArray } from 'drizzle-orm'
 
 export async function GET(
@@ -23,20 +23,9 @@ export async function GET(
   const sprintId = req.nextUrl.searchParams.get('sprintId')
   const personaName = req.nextUrl.searchParams.get('personaName')
 
-  // Find active tasks (running or waiting_approval) for this project's sprints
-  const projectSprints = await db.select({ id: sprints.id })
-    .from(sprints)
-    .where(eq(sprints.projectId, projectId))
-
-  if (projectSprints.length === 0) {
-    return NextResponse.json({ error: 'No active task' }, { status: 404 })
-  }
-
-  const sprintIds = projectSprints.map(s => s.id)
-
-  // Build conditions
+  // Build conditions — agentTasks now has projectId directly
   const conditions = [
-    inArray(agentTasks.sprintId, sprintIds),
+    eq(agentTasks.projectId, projectId),
     inArray(agentTasks.status, ['running', 'waiting_approval']),
   ]
 

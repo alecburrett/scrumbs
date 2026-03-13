@@ -14,9 +14,9 @@ import { getSprintIfOwned } from '@/lib/ownership'
 /** Map sprint status to the artifact type produced during that stage */
 const STAGE_ARTIFACT_TYPE: Partial<Record<SprintStatus, string>> = {
   development: 'sprint-plan',
-  review: 'code-review',
-  qa: 'qa-report',
-  deploying: 'deploy-log',
+  review: 'review',
+  qa: 'test-report',
+  deploying: 'deploy-record',
 }
 
 export async function POST(
@@ -62,7 +62,7 @@ export async function POST(
       .where(
         and(
           eq(artifacts.sprintId, sprintId),
-          eq(artifacts.status, 'active'),
+          eq(artifacts.status, 'current'),
           eq(artifacts.type, artifactType as typeof artifacts.type.enumValues[number])
         )
       )

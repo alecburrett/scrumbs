@@ -20,7 +20,7 @@ export default async function PrdPage({
   const [reqArtifact] = await db
     .select()
     .from(artifacts)
-    .where(and(eq(artifacts.type, 'requirements'), eq(artifacts.status, 'active')))
+    .where(and(eq(artifacts.type, 'requirements'), eq(artifacts.status, 'current')))
     .orderBy(desc(artifacts.createdAt))
     .limit(1)
 

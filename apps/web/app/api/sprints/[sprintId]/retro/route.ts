@@ -40,13 +40,13 @@ export async function POST(
     })
     .returning()
 
-  // Carry forward incomplete stories (todo AND in-progress)
+  // Carry forward incomplete stories (todo AND in_progress)
   const incompleteStories = await db
     .select()
     .from(stories)
     .where(and(
       eq(stories.sprintId, sprintId),
-      inArray(stories.status, ['todo', 'in-progress']),
+      inArray(stories.status, ['todo', 'in_progress']),
     ))
 
   if (incompleteStories.length > 0) {
@@ -56,7 +56,7 @@ export async function POST(
         title: s.title,
         description: s.description,
         status: 'todo' as const,
-        order: i,
+        sortOrder: i,
       }))
     )
   }

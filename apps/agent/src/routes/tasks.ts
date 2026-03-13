@@ -1,6 +1,6 @@
 import type { FastifyPluginAsync } from 'fastify'
 import type { Db } from '@scrumbs/db'
-import { agentTasks, personaNameEnum } from '@scrumbs/db'
+import { agentTasks, personaNameEnum, stageEnum } from '@scrumbs/db'
 import { eq } from 'drizzle-orm'
 import { randomUUID } from 'node:crypto'
 import { runAgentTask, registerEmitter, unregisterEmitter } from '../lib/agent-loop.js'
@@ -9,7 +9,9 @@ import { resolveApproval } from '../lib/approval.js'
 import { z } from 'zod'
 
 const CreateTaskSchema = z.object({
-  sprintId: z.string().min(1),
+  projectId: z.string().min(1),
+  sprintId: z.string().min(1).optional(),
+  stage: z.enum(stageEnum.enumValues),
   personaName: z.enum(personaNameEnum.enumValues),
   input: z.record(z.unknown()).default({}),
   userId: z.string().min(1),
@@ -29,12 +31,12 @@ export const taskRoutes: FastifyPluginAsync<{ db: Db }> = async (fastify, opts) 
           details: parseResult.error.flatten(),
         })
       }
-      const { sprintId, personaName, input, userId } = parseResult.data
+      const { projectId, sprintId, stage, personaName, input, userId } = parseResult.data
       const sessionId = randomUUID()
 
       const [task] = await db
         .insert(agentTasks)
-        .values({ sprintId, personaName, sessionId, inputJson: input })
+        .values({ projectId, sprintId, stage, personaName, sessionId, inputJson: input })
         .returning()
 
       // Fire and forget — agent loop runs asynchronously

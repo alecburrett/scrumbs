@@ -21,7 +21,7 @@ export default async function SprintPlanningPage({
   const [prdArtifact] = await db
     .select()
     .from(artifacts)
-    .where(and(eq(artifacts.type, 'prd'), eq(artifacts.status, 'active')))
+    .where(and(eq(artifacts.type, 'prd'), eq(artifacts.status, 'current')))
     .orderBy(desc(artifacts.createdAt))
     .limit(1)
 

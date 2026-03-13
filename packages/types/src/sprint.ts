@@ -6,4 +6,4 @@ export type SprintStatus =
   | 'deploying'
   | 'complete'
 
-export type StoryStatus = 'todo' | 'in-progress' | 'done'
+export type StoryStatus = 'todo' | 'in_progress' | 'done'

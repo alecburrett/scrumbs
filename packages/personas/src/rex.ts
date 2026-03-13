@@ -24,15 +24,14 @@ ${receivingReview}
 ${verification}
 
 ## Your Mission
-Review the pull request for **${input.githubRepo}** PR #${input.prNumber}.
+Review the pull request for **${input.githubRepo}**.
+PR URL: ${input.prUrl}
+
+## PRD Context
+${input.prdContent}
 
 ## Sprint Plan Context
 ${input.sprintPlan}
-
-## PR Diff
-\`\`\`diff
-${input.prDiff}
-\`\`\`
 
 ## Review Format
 For each finding, classify as:
