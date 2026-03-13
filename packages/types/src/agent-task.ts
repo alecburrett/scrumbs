@@ -1,4 +1,4 @@
-import type { PersonaName } from './persona'
+import type { PersonaName } from './persona.js'
 
 export type AgentTaskStatus =
   | 'pending'
@@ -47,6 +47,13 @@ export interface StellaSprintInput {
   githubRepo: string
 }
 
+export interface StellaRetroInput {
+  projectName: string
+  sprintNumber: number
+  completedStories: Array<{ title: string; status: string }>
+  githubRepo: string
+}
+
 export interface ViktorInput {
   sprintPlan: string
   featureBranch: string
@@ -77,7 +84,8 @@ export interface DexInput {
 
 export interface AgentTaskInput {
   pablo: PabloInput
-  stella: StellaSprintInput
+  stella_sprint: StellaSprintInput
+  stella_retro: StellaRetroInput
   viktor: ViktorInput
   rex: RexInput
   quinn: QuinnInput

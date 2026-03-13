@@ -25,7 +25,8 @@ export async function POST(
     .from(sprints)
     .where(eq(sprints.projectId, projectId))
 
-  const nextNumber = existingSprints.length + 1
+  const maxNumber = existingSprints.reduce((max, s) => Math.max(max, s.number), 0)
+  const nextNumber = maxNumber + 1
 
   const [sprint] = await db
     .insert(sprints)

@@ -20,18 +20,23 @@ export function TerminalPanel({
 }: TerminalPanelProps) {
   const [events, setEvents] = useState<SSEEvent[]>([])
   const [pendingApproval, setPendingApproval] = useState(false)
+  const [connected, setConnected] = useState(false)
   const bottomRef = useRef<HTMLDivElement>(null)
+  const onStoryStatusRef = useRef(onStoryStatus)
+  useEffect(() => { onStoryStatusRef.current = onStoryStatus })
 
   useEffect(() => {
     const url = `${agentServiceUrl}/tasks/${taskId}/stream?sessionId=${sessionId}`
     const es = new EventSource(url)
+
+    es.onopen = () => setConnected(true)
 
     es.onmessage = (e) => {
       try {
         const event = JSON.parse(e.data) as SSEEvent
         if (event.type === 'story_status') {
           const p = event.payload as { storyId: string; status: string }
-          onStoryStatus?.(p.storyId, p.status)
+          onStoryStatusRef.current?.(p.storyId, p.status)
           return
         }
         if (event.type === 'approval_required') {
@@ -42,8 +47,10 @@ export function TerminalPanel({
       } catch {}
     }
 
+    es.onerror = () => setConnected(false)
+
     return () => es.close()
-  }, [taskId, sessionId, agentServiceUrl, onStoryStatus])
+  }, [taskId, sessionId, agentServiceUrl])
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' })
@@ -54,7 +61,7 @@ export function TerminalPanel({
   return (
     <div className="flex flex-col h-full bg-slate-950 rounded-lg border border-slate-800">
       <div className="px-4 py-2 border-b border-slate-800 flex items-center gap-2">
-        <span className="w-2 h-2 rounded-full bg-green-400" />
+        <span className={`w-2 h-2 rounded-full ${connected ? 'bg-green-400' : 'bg-amber-400'}`} />
         <span className="text-xs text-slate-400 font-mono">Viktor — terminal</span>
       </div>
       {pendingApproval && (

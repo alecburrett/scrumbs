@@ -46,7 +46,7 @@ export const agentTasks = pgTable('agent_task', {
   tokensBudget: integer('tokens_budget').notNull().default(150000),
   tokensUsed: integer('tokens_used').notNull().default(0),
   createdAt: timestamp('created_at').notNull().defaultNow(),
-  updatedAt: timestamp('updated_at').notNull().defaultNow(),
+  updatedAt: timestamp('updated_at').notNull().$defaultFn(() => new Date()).$onUpdate(() => new Date()),
 })
 
 export const artifacts = pgTable('artifact', {

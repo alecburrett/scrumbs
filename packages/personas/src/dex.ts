@@ -23,5 +23,7 @@ Deploy **${input.githubRepo}** branch \`${input.featureBranch}\` to production.
 ## Rules
 - Every git push requires user approval
 - Production deploy step requires user approval
-- Report each pipeline step as it completes`
+- Report each pipeline step as it completes
+
+Working directory: ${input.workspaceDir}`
 }

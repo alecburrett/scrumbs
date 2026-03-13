@@ -5,6 +5,12 @@ import { z } from 'zod'
 
 const execFileAsync = promisify(execFile)
 
+export const ALLOWED_COMMANDS = new Set([
+  'npm', 'npx', 'node', 'git', 'tsc', 'vitest',
+  'cat', 'ls', 'find', 'mkdir', 'cp', 'mv', 'rm',
+  'echo', 'head', 'tail', 'grep', 'wc', 'diff', 'sort', 'uniq',
+])
+
 const BashInputSchema = z.object({
   command: z.string().min(1),
   args: z.array(z.string()).default([]),
@@ -29,6 +35,10 @@ registerTool({
   requiresApproval: true,
   async execute(input, context) {
     const { command, args } = BashInputSchema.parse(input)
+
+    if (!ALLOWED_COMMANDS.has(command)) {
+      throw new Error(`Command not permitted: ${command}. Allowed: ${[...ALLOWED_COMMANDS].join(', ')}`)
+    }
 
     const { stdout, stderr } = await execFileAsync(command, args, {
       cwd: context.workspaceDir,

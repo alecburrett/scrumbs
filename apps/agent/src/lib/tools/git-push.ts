@@ -17,7 +17,7 @@ registerTool({
     const { stdout } = await execFileAsync(
       'git',
       ['push', '--set-upstream', 'origin', 'HEAD'],
-      { cwd: context.workspaceDir, env: context.env }
+      { cwd: context.workspaceDir, env: context.gitEnv }
     )
     return stdout
   },
