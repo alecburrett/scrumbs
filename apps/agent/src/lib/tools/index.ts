@@ -12,7 +12,8 @@ export interface ToolDefinition {
 
 export interface ToolContext {
   workspaceDir: string
-  env: NodeJS.ProcessEnv
+  env: NodeJS.ProcessEnv      // clean env (no GIT_TOKEN)
+  gitEnv: NodeJS.ProcessEnv   // full env (for git push only)
   taskId: string
 }
 
