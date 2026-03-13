@@ -1,6 +1,6 @@
 import type { FastifyPluginAsync } from 'fastify'
 import type { Db } from '@scrumbs/db'
-import { agentTasks } from '@scrumbs/db'
+import { agentTasks, personaNameEnum } from '@scrumbs/db'
 import { eq } from 'drizzle-orm'
 import { randomUUID } from 'node:crypto'
 import { runAgentTask } from '../lib/agent-loop.js'
@@ -10,7 +10,7 @@ import { z } from 'zod'
 
 const CreateTaskSchema = z.object({
   sprintId: z.string().min(1),
-  personaName: z.enum(['pablo', 'stella', 'viktor', 'rex', 'quinn', 'dex', 'max']),
+  personaName: z.enum(personaNameEnum.enumValues as [string, ...string[]]),
   input: z.record(z.unknown()).default({}),
 })
 

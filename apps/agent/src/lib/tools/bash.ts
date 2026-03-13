@@ -5,6 +5,11 @@ import { z } from 'zod'
 
 const execFileAsync = promisify(execFile)
 
+const BashInputSchema = z.object({
+  command: z.string().min(1),
+  args: z.array(z.string()).default([]),
+})
+
 // SECURITY: always use execFile with argument arrays — never exec() or shell interpolation
 registerTool({
   name: 'bash',
@@ -23,10 +28,7 @@ registerTool({
   },
   requiresApproval: true,
   async execute(input, context) {
-    const { command, args } = z.object({
-      command: z.string(),
-      args: z.array(z.string()).default([]),
-    }).parse(input)
+    const { command, args } = BashInputSchema.parse(input)
 
     const { stdout, stderr } = await execFileAsync(command, args, {
       cwd: context.workspaceDir,

@@ -5,6 +5,10 @@ import { z } from 'zod'
 
 const execFileAsync = promisify(execFile)
 
+const GitCommitInputSchema = z.object({
+  message: z.string().min(1),
+})
+
 registerTool({
   name: 'git_commit',
   description: 'Stage all changes and create a git commit',
@@ -17,7 +21,7 @@ registerTool({
   },
   requiresApproval: false,
   async execute(input, context) {
-    const { message } = z.object({ message: z.string() }).parse(input)
+    const { message } = GitCommitInputSchema.parse(input)
     await execFileAsync('git', ['add', '-A'], { cwd: context.workspaceDir, env: context.env })
     const { stdout } = await execFileAsync(
       'git',
