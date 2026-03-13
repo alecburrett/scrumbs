@@ -4,5 +4,4 @@ export interface Persona {
   name: PersonaName
   displayName: string
   colour: string
-  systemPrompt: string
 }
