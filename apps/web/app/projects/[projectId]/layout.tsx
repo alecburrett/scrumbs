@@ -28,7 +28,7 @@ export default async function ProjectLayout({
       <header className="border-b border-slate-800 px-6 py-3">
         <div className="flex items-center justify-between">
           <span className="font-semibold">{project.name}</span>
-          <StageProgressBar currentStage="requirements" />
+          <StageProgressBar currentStage={undefined} />
         </div>
       </header>
       <div className="flex-1 overflow-hidden">{children}</div>

@@ -23,6 +23,10 @@ export function ConversationPanel({
   const bottomRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
+    setEvents([])
+    setDone(false)
+    setConnected(false)
+
     const url = `${agentServiceUrl}/tasks/${taskId}/stream?sessionId=${sessionId}`
     const es = new EventSource(url)
 
