@@ -1,55 +1,57 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { auth } from '@/auth'
 import { db } from '@/lib/db'
-import { sprints, stories, projects } from '@scrumbs/db'
-import { eq, and } from 'drizzle-orm'
+import { sprints, stories } from '@scrumbs/db'
+import { eq, and, inArray } from 'drizzle-orm'
+import { getSprintIfOwned } from '@/lib/ownership'
 
 export async function POST(
   req: NextRequest,
   { params }: { params: Promise<{ sprintId: string }> }
 ) {
-  const { sprintId } = await params
   const session = await auth()
   if (!session?.user?.id) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
-  // Fetch current sprint
-  const [currentSprint] = await db.select().from(sprints).where(eq(sprints.id, sprintId))
-  if (!currentSprint) return NextResponse.json({ error: 'Sprint not found' }, { status: 404 })
+  const { sprintId } = await params
+  const currentSprint = await getSprintIfOwned(sprintId, session.user.id)
+  if (!currentSprint) return NextResponse.json({ error: 'Not found' }, { status: 404 })
 
   if (currentSprint.status !== 'complete') {
     return NextResponse.json(
-      { error: 'Sprint must be complete before starting a retro' },
+      { error: 'Sprint must be complete before starting retro' },
       { status: 400 }
     )
   }
 
-  // Get all sprints for the project to determine next sprint number
+  // Calculate next sprint number safely
   const projectSprints = await db
     .select({ number: sprints.number })
     .from(sprints)
     .where(eq(sprints.projectId, currentSprint.projectId))
+  const maxNumber = projectSprints.reduce((max, s) => Math.max(max, s.number), 0)
 
-  const nextNumber = projectSprints.length > 0 ? Math.max(...projectSprints.map((s) => s.number)) + 1 : 1;
-
-  // Create Sprint N+1
+  // Create next sprint
   const [newSprint] = await db
     .insert(sprints)
     .values({
       projectId: currentSprint.projectId,
-      number: nextNumber,
+      number: maxNumber + 1,
       status: 'planning',
     })
     .returning()
 
-  // Carry forward 'todo' stories from current sprint
-  const todoStories = await db
+  // Carry forward incomplete stories (todo AND in-progress)
+  const incompleteStories = await db
     .select()
     .from(stories)
-    .where(and(eq(stories.sprintId, sprintId), eq(stories.status, 'todo')))
+    .where(and(
+      eq(stories.sprintId, sprintId),
+      inArray(stories.status, ['todo', 'in-progress']),
+    ))
 
-  if (todoStories.length > 0) {
+  if (incompleteStories.length > 0) {
     await db.insert(stories).values(
-      todoStories.map((s, i) => ({
+      incompleteStories.map((s, i) => ({
         sprintId: newSprint.id,
         title: s.title,
         description: s.description,
@@ -59,11 +61,5 @@ export async function POST(
     )
   }
 
-  // Redirect to new sprint planning page
-  return NextResponse.redirect(
-    new URL(
-      `/projects/${currentSprint.projectId}/sprints/${newSprint.id}/planning`,
-      req.url
-    )
-  )
+  return NextResponse.json({ sprintId: newSprint.id }, { status: 201 })
 }

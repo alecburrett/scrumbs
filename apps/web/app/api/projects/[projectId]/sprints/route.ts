@@ -2,8 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { auth } from '@/auth'
 import { db } from '@/lib/db'
 import { projects, sprints } from '@scrumbs/db'
-import { eq, and, desc } from 'drizzle-orm'
-import { assertValidTransition } from '@/lib/sprint-state-machine'
+import { eq, and } from 'drizzle-orm'
 
 export async function POST(
   req: NextRequest,
@@ -26,7 +25,8 @@ export async function POST(
     .from(sprints)
     .where(eq(sprints.projectId, projectId))
 
-  const nextNumber = existingSprints.length + 1
+  const maxNumber = existingSprints.reduce((max, s) => Math.max(max, s.number), 0)
+  const nextNumber = maxNumber + 1
 
   const [sprint] = await db
     .insert(sprints)
