@@ -5,7 +5,10 @@ export async function GET() {
   const session = await auth()
   if (!session?.user?.id) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
-  return NextResponse.json({
-    agentServiceUrl: process.env.AGENT_SERVICE_URL!,
-  })
+  const agentServiceUrl = process.env.AGENT_SERVICE_URL
+  if (!agentServiceUrl) {
+    return NextResponse.json({ error: 'Agent service not configured' }, { status: 503 })
+  }
+
+  return NextResponse.json({ agentServiceUrl })
 }

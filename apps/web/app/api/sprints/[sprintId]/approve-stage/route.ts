@@ -50,17 +50,6 @@ export async function POST(
     return NextResponse.json({ error: 'Project not found' }, { status: 404 })
   }
 
-  // Create artifact if content provided
-  if (body.artifactContent && body.artifactType && body.agentTaskId) {
-    await db.insert(artifacts).values({
-      agentTaskId: body.agentTaskId,
-      sprintId,
-      type: body.artifactType,
-      contentMd: body.artifactContent,
-      status: 'active',
-    })
-  }
-
   const currentStatus = sprint.status as SprintStatus
 
   // Determine next status and perform transition-specific actions
@@ -218,6 +207,17 @@ export async function POST(
       return NextResponse.json({ error: err.message }, { status: 400 })
     }
     throw err
+  }
+
+  // Create artifact after transition is validated
+  if (body.artifactContent && body.artifactType && body.agentTaskId) {
+    await db.insert(artifacts).values({
+      agentTaskId: body.agentTaskId,
+      sprintId,
+      type: body.artifactType,
+      contentMd: body.artifactContent,
+      status: 'active',
+    })
   }
 
   // Advance sprint status

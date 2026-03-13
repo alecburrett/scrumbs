@@ -1,5 +1,7 @@
 import type Anthropic from '@anthropic-ai/sdk'
 import type { SSEEvent } from '@scrumbs/types'
+import { agentTasks, type Db } from '@scrumbs/db'
+import { eq } from 'drizzle-orm'
 import { getTool } from './tools/index.js'
 import type { ToolContext } from './tools/index.js'
 import { waitForApproval } from './approval.js'
@@ -25,7 +27,7 @@ export async function executeToolCalls(
   context: ToolContext,
   emit: EmitFn,
   taskId: string,
-  db: import('@scrumbs/db').Db
+  db: Db
 ): Promise<ToolResultBlock[]> {
   const results: ToolResultBlock[] = []
 
@@ -54,9 +56,6 @@ export async function executeToolCalls(
 
     // Handle approval gate if required
     if (tool.requiresApproval) {
-      const { agentTasks } = await import('@scrumbs/db')
-      const { eq } = await import('drizzle-orm')
-
       const approvalPromise = waitForApproval(taskId)
       emit({
         type: 'approval_required',

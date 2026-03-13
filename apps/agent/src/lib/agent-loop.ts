@@ -23,7 +23,7 @@ import {
 } from '@scrumbs/personas'
 
 const SSE_BUFFER_CLEANUP_DELAY_MS = 30_000
-const MODEL = 'claude-sonnet-4-20250514'
+const MODEL = process.env.ANTHROPIC_MODEL ?? 'claude-sonnet-4-20250514'
 const MAX_TURNS = 50
 
 // In-memory map of active emitters (populated by the SSE route)
@@ -226,7 +226,7 @@ export async function runAgentTask(
       for (const block of response.content) {
         if (block.type === 'text') {
           textBlocks.push(block.text)
-          emit({ type: 'message', payload: block.text })
+          emit({ type: 'message', payload: { content: block.text, role: 'assistant' } })
         } else if (block.type === 'tool_use') {
           toolUseBlocks.push({
             type: 'tool_use',
@@ -237,8 +237,8 @@ export async function runAgentTask(
         }
       }
 
-      // If stop reason is end_turn (no tool use), we're done
-      if (response.stop_reason === 'end_turn') {
+      // If stop reason is not tool_use, the agent is done (end_turn, max_tokens, etc.)
+      if (response.stop_reason !== 'tool_use') {
         // Store the final output
         const finalOutput = textBlocks.join('\n\n')
         await db
@@ -254,7 +254,7 @@ export async function runAgentTask(
         return
       }
 
-      // Process tool calls if any
+      // Process tool calls
       if (toolUseBlocks.length > 0) {
         // Check cancellation before executing tools
         if (await isTaskCancelled(db, taskId)) {
@@ -332,7 +332,7 @@ export async function runAgentTask(
   } finally {
     // Cleanup workspace
     if (workspace) {
-      await workspace.cleanup().catch(() => {})
+      await workspace.cleanup().catch((err) => console.error(`Failed to cleanup workspace for task ${taskId}`, err))
     }
 
     unregisterEmitter(taskId)
