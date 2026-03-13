@@ -1,9 +1,9 @@
-import { pgTable, text, timestamp, primaryKey, integer } from 'drizzle-orm/pg-core'
+import { pgTable, text, timestamp, primaryKey, integer, boolean } from 'drizzle-orm/pg-core'
 
 export const users = pgTable('user', {
   id: text('id').notNull().primaryKey(),
   name: text('name'),
-  email: text('email').notNull(),
+  email: text('email').notNull().unique(),
   emailVerified: timestamp('emailVerified', { mode: 'date' }),
   image: text('image'),
 })
@@ -49,5 +49,24 @@ export const verificationTokens = pgTable(
   },
   (vt) => ({
     compoundKey: primaryKey({ columns: [vt.identifier, vt.token] }),
+  })
+)
+
+export const authenticators = pgTable(
+  'authenticator',
+  {
+    credentialID: text('credential_id').notNull().unique(),
+    userId: text('userId')
+      .notNull()
+      .references(() => users.id, { onDelete: 'cascade' }),
+    providerAccountId: text('provider_account_id').notNull(),
+    credentialPublicKey: text('credential_public_key').notNull(),
+    counter: integer('counter').notNull(),
+    credentialDeviceType: text('credential_device_type').notNull(),
+    credentialBackedUp: boolean('credential_backed_up').notNull(),
+    transports: text('transports'),
+  },
+  (t) => ({
+    compoundKey: primaryKey({ columns: [t.userId, t.credentialID] }),
   })
 )
