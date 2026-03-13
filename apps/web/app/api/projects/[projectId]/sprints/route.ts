@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { auth } from '@/auth'
 import { db } from '@/lib/db'
 import { projects, sprints } from '@scrumbs/db'
-import { eq, and } from 'drizzle-orm'
+import { eq, and, ne } from 'drizzle-orm'
 
 export async function POST(
   req: NextRequest,
@@ -18,6 +18,25 @@ export async function POST(
     .from(projects)
     .where(and(eq(projects.id, projectId), eq(projects.userId, session.user.id)))
   if (!project) return NextResponse.json({ error: 'Not found' }, { status: 404 })
+
+  // Guard against concurrent sprints
+  const [activeSprint] = await db
+    .select({ id: sprints.id })
+    .from(sprints)
+    .where(
+      and(
+        eq(sprints.projectId, projectId),
+        ne(sprints.status, 'complete')
+      )
+    )
+    .limit(1)
+
+  if (activeSprint) {
+    return NextResponse.json(
+      { error: 'Active sprint exists', sprintId: activeSprint.id },
+      { status: 409 }
+    )
+  }
 
   // Get current sprint count
   const existingSprints = await db
