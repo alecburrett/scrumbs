@@ -1,6 +1,6 @@
 import type { Db } from '@scrumbs/db'
-import { agentTasks } from '@scrumbs/db'
-import { eq, and, inArray } from 'drizzle-orm'
+import { agentTasks, sprints, projects } from '@scrumbs/db'
+import { eq, and, inArray, sql } from 'drizzle-orm'
 
 const MAX_CONCURRENT_PER_USER = 3
 
@@ -18,21 +18,18 @@ export class ConcurrencyLimitError extends Error {
   }
 }
 
-export async function checkConcurrencyLimit(
-  db: Db,
-  userId: string
-): Promise<void> {
-  // Count running tasks for this user's sprints
-  const runningTasks = await db
-    .select({ id: agentTasks.id })
+export async function checkConcurrencyLimit(db: Db, userId: string): Promise<void> {
+  const [result] = await db
+    .select({ count: sql<number>`count(*)::int` })
     .from(agentTasks)
-    .where(
-      inArray(agentTasks.status, ['running', 'waiting_approval'])
-    )
+    .innerJoin(sprints, eq(agentTasks.sprintId, sprints.id))
+    .innerJoin(projects, eq(sprints.projectId, projects.id))
+    .where(and(
+      eq(projects.userId, userId),
+      inArray(agentTasks.status, ['running', 'waiting_approval']),
+    ))
 
-  // Note: in production, join to sprints/projects to filter by userId
-  // For now, global concurrency check is sufficient
-  if (runningTasks.length >= MAX_CONCURRENT_PER_USER) {
+  if ((result?.count ?? 0) >= MAX_CONCURRENT_PER_USER) {
     throw new ConcurrencyLimitError(userId)
   }
 }
@@ -54,20 +51,9 @@ export async function checkTokenBudget(
   }
 }
 
-export async function incrementTokensUsed(
-  db: Db,
-  taskId: string,
-  tokens: number
-): Promise<void> {
-  const [task] = await db
-    .select({ tokensUsed: agentTasks.tokensUsed })
-    .from(agentTasks)
-    .where(eq(agentTasks.id, taskId))
-
-  if (!task) return
-
+export async function incrementTokensUsed(db: Db, taskId: string, tokens: number): Promise<void> {
   await db
     .update(agentTasks)
-    .set({ tokensUsed: task.tokensUsed + tokens })
+    .set({ tokensUsed: sql`${agentTasks.tokensUsed} + ${tokens}` })
     .where(eq(agentTasks.id, taskId))
 }
