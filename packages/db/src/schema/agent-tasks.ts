@@ -1,5 +1,5 @@
 import { pgTable, text, timestamp, integer, pgEnum, jsonb } from 'drizzle-orm/pg-core'
-import { sprints } from './projects'
+import { sprints } from './projects.js'
 
 export const agentTaskStatusEnum = pgEnum('agent_task_status', [
   'pending',
