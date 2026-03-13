@@ -22,8 +22,13 @@ registerTool({
       })
       return `STDOUT:\n${stdout}\nSTDERR:\n${stderr}`
     } catch (err: unknown) {
-      const e = err as { stdout?: string; stderr?: string; message?: string }
-      return `Tests failed:\nSTDOUT:\n${e.stdout ?? ''}\nSTDERR:\n${e.stderr ?? ''}`
+      let stdout = ''
+      let stderr = ''
+      if (err && typeof err === 'object') {
+        if ('stdout' in err && typeof err.stdout === 'string') stdout = err.stdout
+        if ('stderr' in err && typeof err.stderr === 'string') stderr = err.stderr
+      }
+      return `Tests failed:\nSTDOUT:\n${stdout}\nSTDERR:\n${stderr}`
     }
   },
 })
