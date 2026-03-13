@@ -15,7 +15,8 @@
     "@scrumbs/types": "*",
     "drizzle-orm": "~0.36.x",
     "fastify": "~5.x",
-    "postgres": "~3.4.x"
+    "postgres": "~3.4.x",
+    "zod": "~3.22.0"
   },
   "devDependencies": {
     "@types/node": "~20.x",
