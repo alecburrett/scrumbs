@@ -1,6 +1,7 @@
 interface CreateTaskParams {
-  sprintId: string
+  sprintId?: string
   personaName: string
+  userId: string
   input: unknown
 }
 

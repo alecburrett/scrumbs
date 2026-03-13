@@ -1,6 +1,6 @@
 'use client'
 
-import { PERSONA_COLOURS, PERSONA_DISPLAY_NAMES } from '@scrumbs/personas'
+import { PERSONA_COLOURS, PERSONA_DISPLAY_NAMES } from '@/lib/persona-constants'
 import type { PersonaName } from '@scrumbs/types'
 import { ApproveButton } from './approve-button'
 

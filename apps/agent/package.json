@@ -5,13 +5,14 @@
   "type": "module",
   "scripts": {
     "dev": "tsx watch src/index.ts",
-    "build": "tsc",
+    "build": "npm run build -w @scrumbs/personas && tsc",
     "start": "node dist/index.js"
   },
   "dependencies": {
-    "@anthropic-ai/sdk": "~0.39.x",
+    "@anthropic-ai/sdk": "^0.39.0",
     "@octokit/rest": "~21.x",
     "@scrumbs/db": "*",
+    "@scrumbs/personas": "*",
     "@scrumbs/types": "*",
     "drizzle-orm": "~0.36.x",
     "fastify": "~5.x",
