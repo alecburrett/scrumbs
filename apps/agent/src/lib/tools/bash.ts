@@ -4,6 +4,12 @@ import { registerTool } from './index.js'
 
 const execFileAsync = promisify(execFile)
 
+export const ALLOWED_COMMANDS = new Set([
+  'npm', 'npx', 'node', 'git', 'tsc', 'vitest',
+  'cat', 'ls', 'find', 'mkdir', 'cp', 'mv', 'rm',
+  'echo', 'head', 'tail', 'grep', 'wc', 'diff', 'sort', 'uniq',
+])
+
 // SECURITY: always use execFile with argument arrays — never exec() or shell interpolation
 registerTool({
   name: 'bash',
@@ -22,6 +28,9 @@ registerTool({
   },
   requiresApproval: true,
   async execute({ command, args = [] }, context) {
+    if (!ALLOWED_COMMANDS.has(command as string)) {
+      throw new Error(`Command not permitted: ${command}. Allowed: ${[...ALLOWED_COMMANDS].join(', ')}`)
+    }
     const { stdout, stderr } = await execFileAsync(command as string, args as string[], {
       cwd: context.workspaceDir,
       env: context.env,
