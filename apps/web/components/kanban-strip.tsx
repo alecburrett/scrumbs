@@ -16,13 +16,6 @@ interface KanbanStripProps {
 export function KanbanStrip({ initialStories }: KanbanStripProps) {
   const [stories, setStories] = useState(initialStories)
 
-  // Called by TerminalPanel when a story_status event arrives
-  const updateStoryStatus = (storyId: string, status: StoryStatus) => {
-    setStories((prev) =>
-      prev.map((s) => (s.id === storyId ? { ...s, status } : s))
-    )
-  }
-
   const columns: { key: StoryStatus; label: string }[] = [
     { key: 'todo', label: 'To Do' },
     { key: 'in-progress', label: 'In Progress' },
