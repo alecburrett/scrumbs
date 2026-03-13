@@ -10,7 +10,7 @@ import { z } from 'zod'
 
 const CreateTaskSchema = z.object({
   sprintId: z.string().min(1),
-  personaName: z.enum(personaNameEnum.enumValues as [string, ...string[]]),
+  personaName: z.enum(personaNameEnum.enumValues),
   input: z.record(z.unknown()).default({}),
 })
 
