@@ -1,5 +1,5 @@
 import { pgTable, text, timestamp, integer, pgEnum } from 'drizzle-orm/pg-core'
-import { users } from './auth'
+import { users } from './auth.js'
 
 export const sprintStatusEnum = pgEnum('sprint_status', [
   'planning',
