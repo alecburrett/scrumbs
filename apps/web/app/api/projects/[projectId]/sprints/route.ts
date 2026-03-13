@@ -2,8 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { auth } from '@/auth'
 import { db } from '@/lib/db'
 import { projects, sprints } from '@scrumbs/db'
-import { eq, and, desc } from 'drizzle-orm'
-import { assertValidTransition } from '@/lib/sprint-state-machine'
+import { eq, and } from 'drizzle-orm'
 
 export async function POST(
   req: NextRequest,

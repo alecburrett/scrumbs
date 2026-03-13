@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { auth } from '@/auth'
 import { db } from '@/lib/db'
-import { sprints, stories, projects } from '@scrumbs/db'
+import { sprints, stories } from '@scrumbs/db'
 import { eq, and } from 'drizzle-orm'
 
 export async function POST(

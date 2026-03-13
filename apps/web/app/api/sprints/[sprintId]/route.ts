@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { auth } from '@/auth'
 import { db } from '@/lib/db'
-import { sprints, projects, stories } from '@scrumbs/db'
-import { eq, and } from 'drizzle-orm'
+import { sprints, stories } from '@scrumbs/db'
+import { eq } from 'drizzle-orm'
 import { assertValidTransition } from '@/lib/sprint-state-machine'
 import type { SprintStatus } from '@scrumbs/types'
 
