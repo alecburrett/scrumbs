@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest'
 import { getTableConfig } from 'drizzle-orm/pg-core'
-import { users, accounts, sessions, verificationTokens, authenticators } from '../auth'
+import { users, accounts, sessions, verificationTokens, authenticators } from '../auth.js'
 
 describe('auth schema', () => {
   it('users table has unique email constraint', () => {

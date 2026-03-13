@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest'
 import { getTableConfig } from 'drizzle-orm/pg-core'
-import { sprints } from '../projects'
+import { sprints } from '../projects.js'
 
 describe('projects schema', () => {
   it('sprints table has unique constraint on (projectId, number)', () => {

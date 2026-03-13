@@ -1,8 +1,8 @@
 import postgres from 'postgres'
 import { drizzle } from 'drizzle-orm/postgres-js'
-import * as authSchema from './schema/auth'
-import * as projectsSchema from './schema/projects'
-import * as agentTasksSchema from './schema/agent-tasks'
+import * as authSchema from './schema/auth.js'
+import * as projectsSchema from './schema/projects.js'
+import * as agentTasksSchema from './schema/agent-tasks.js'
 
 const schema = { ...authSchema, ...projectsSchema, ...agentTasksSchema }
 
@@ -24,6 +24,6 @@ export type Db = ReturnType<typeof createDb>
 // Note: createDb IS the singleton — calling it twice with the same connection string
 // returns the same instance. No separate getDb needed. All call sites use createDb.
 
-export * from './schema/auth'
-export * from './schema/projects'
-export * from './schema/agent-tasks'
+export * from './schema/auth.js'
+export * from './schema/projects.js'
+export * from './schema/agent-tasks.js'

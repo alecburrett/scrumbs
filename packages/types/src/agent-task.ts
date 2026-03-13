@@ -1,4 +1,4 @@
-import type { PersonaName } from './persona'
+import type { PersonaName } from './persona.js'
 
 export type AgentTaskStatus =
   | 'pending'
