@@ -2,9 +2,10 @@ import { execFile } from 'node:child_process'
 import { promisify } from 'node:util'
 import fs from 'node:fs/promises'
 import path from 'node:path'
+import { tmpdir } from 'node:os'
 
 const execFileAsync = promisify(execFile)
-const WORKSPACE_BASE = '/tmp/scrumbs'
+const WORKSPACE_BASE = path.join(tmpdir(), 'scrumbs')
 
 export interface Workspace {
   dir: string

@@ -2,8 +2,10 @@ import type { Db } from '@scrumbs/db'
 import { agentTasks } from '@scrumbs/db'
 import { eq } from 'drizzle-orm'
 import { SSEEmitter } from './sse.js'
-import { waitForApproval, resolveApproval } from './approval.js'
+import { waitForApproval } from './approval.js'
 import type { SSEEvent } from '@scrumbs/types'
+
+const SSE_BUFFER_CLEANUP_DELAY_MS = 30_000
 
 // In-memory map of active emitters (populated by the SSE route)
 const activeEmitters = new Map<string, SSEEmitter>()
@@ -131,7 +133,6 @@ export async function runAgentTask(taskId: string, db: Db): Promise<void> {
     emit({ type: 'done', payload: { success: false } })
   } finally {
     unregisterEmitter(taskId)
-    // Allow 30s for reconnect replay, then clean up
-    setTimeout(() => SSEEmitter.clearBuffer(sessionId), 30_000)
+    setTimeout(() => SSEEmitter.clearBuffer(sessionId), SSE_BUFFER_CLEANUP_DELAY_MS)
   }
 }

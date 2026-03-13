@@ -1,10 +1,5 @@
 import { describe, it, expect } from 'vitest'
-
-const ALLOWED_COMMANDS = new Set([
-  'npm', 'npx', 'node', 'git', 'tsc', 'vitest',
-  'cat', 'ls', 'find', 'mkdir', 'cp', 'mv', 'rm',
-  'echo', 'head', 'tail', 'grep', 'wc', 'diff', 'sort', 'uniq',
-])
+import { ALLOWED_COMMANDS } from '../tools/bash.js'
 
 describe('bash allowlist', () => {
   it('allows npm', () => expect(ALLOWED_COMMANDS.has('npm')).toBe(true))

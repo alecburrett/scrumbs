@@ -40,8 +40,8 @@ export function ConversationPanel({
           setDone(true)
           es.close()
         }
-      } catch {
-        // ignore parse errors
+      } catch (error) {
+        console.error('Failed to parse SSE event data:', e.data, error)
       }
     }
 

@@ -23,7 +23,10 @@ export async function maybeSummariseHistory(
     return { messages, summarised: false }
   }
 
-  const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY! })
+  if (!process.env.ANTHROPIC_API_KEY) {
+    throw new Error('ANTHROPIC_API_KEY environment variable is not set')
+  }
+  const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY })
 
   const summaryResponse = await client.messages.create({
     model: 'claude-haiku-4-5-20251001',
