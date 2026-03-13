@@ -18,18 +18,24 @@ export class ConcurrencyLimitError extends Error {
   }
 }
 
-export async function checkConcurrencyLimit(db: Db, userId: string): Promise<void> {
-  const [result] = await db
-    .select({ count: sql<number>`count(*)::int` })
+export async function checkConcurrencyLimit(
+  db: Db,
+  userId: string
+): Promise<void> {
+  const runningTasks = await db
+    .select({ id: agentTasks.id })
     .from(agentTasks)
     .innerJoin(sprints, eq(agentTasks.sprintId, sprints.id))
     .innerJoin(projects, eq(sprints.projectId, projects.id))
-    .where(and(
-      eq(projects.userId, userId),
-      inArray(agentTasks.status, ['running', 'waiting_approval']),
-    ))
+    .where(
+      and(
+        inArray(agentTasks.status, ['running', 'waiting_approval']),
+        eq(projects.userId, userId)
+      )
+    )
+    .limit(MAX_CONCURRENT_PER_USER)
 
-  if ((result?.count ?? 0) >= MAX_CONCURRENT_PER_USER) {
+  if (runningTasks.length >= MAX_CONCURRENT_PER_USER) {
     throw new ConcurrencyLimitError(userId)
   }
 }
@@ -51,7 +57,11 @@ export async function checkTokenBudget(
   }
 }
 
-export async function incrementTokensUsed(db: Db, taskId: string, tokens: number): Promise<void> {
+export async function incrementTokensUsed(
+  db: Db,
+  taskId: string,
+  tokens: number
+): Promise<void> {
   await db
     .update(agentTasks)
     .set({ tokensUsed: sql`${agentTasks.tokensUsed} + ${tokens}` })

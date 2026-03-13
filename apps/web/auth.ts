@@ -3,6 +3,10 @@ import GitHub from 'next-auth/providers/github'
 import { DrizzleAdapter } from '@auth/drizzle-adapter'
 import { db } from '@/lib/db'
 
+// next-auth v5 beta: 'auth' type references next-auth/lib internals which
+// TypeScript cannot name under isolatedModules — suppress the portability error.
+// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+// @ts-ignore
 export const { handlers, auth, signIn, signOut } = NextAuth({
   adapter: DrizzleAdapter(db),
   providers: [

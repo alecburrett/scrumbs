@@ -2,6 +2,12 @@ import fs from 'node:fs/promises'
 import path from 'node:path'
 import { registerTool } from './index.js'
 import { validateWorkspacePath } from '../workspace.js'
+import { z } from 'zod'
+
+const WriteFileInputSchema = z.object({
+  path: z.string().min(1),
+  content: z.string(),
+})
 
 registerTool({
   name: 'write_file',
@@ -15,9 +21,9 @@ registerTool({
     required: ['path', 'content'],
   },
   requiresApproval: false,
-  async execute({ path: filePath, content }, context) {
-    if (typeof filePath !== 'string') throw new Error('path must be a string')
-    if (typeof content !== 'string') throw new Error('content must be a string')
+  async execute(input, context) {
+    const { path: filePath, content } = WriteFileInputSchema.parse(input)
+
     const resolved = validateWorkspacePath(context.workspaceDir, filePath)
     await fs.mkdir(path.dirname(resolved), { recursive: true })
     await fs.writeFile(resolved, content, 'utf-8')

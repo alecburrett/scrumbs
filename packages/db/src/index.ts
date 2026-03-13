@@ -21,9 +21,7 @@ export function createDb(connectionString: string) {
 
 export type Db = ReturnType<typeof createDb>
 
-// Note: createDb IS the singleton — calling it twice with the same connection string
-// returns the same instance. No separate getDb needed. All call sites use createDb.
-
+export { createDb }
 export * from './schema/auth.js'
 export * from './schema/projects.js'
 export * from './schema/agent-tasks.js'

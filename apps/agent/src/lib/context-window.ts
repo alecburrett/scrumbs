@@ -24,7 +24,7 @@ export async function maybeSummariseHistory(
   }
 
   if (!process.env.ANTHROPIC_API_KEY) {
-    throw new Error('ANTHROPIC_API_KEY environment variable is not set')
+    throw new Error('ANTHROPIC_API_KEY environment variable is required')
   }
   const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY })
 

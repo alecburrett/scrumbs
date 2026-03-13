@@ -1,6 +1,7 @@
 import { execFile } from 'node:child_process'
 import { promisify } from 'node:util'
 import { registerTool } from './index.js'
+import { z } from 'zod'
 
 const execFileAsync = promisify(execFile)
 
@@ -9,6 +10,11 @@ export const ALLOWED_COMMANDS = new Set([
   'cat', 'ls', 'find', 'mkdir', 'cp', 'mv', 'rm',
   'echo', 'head', 'tail', 'grep', 'wc', 'diff', 'sort', 'uniq',
 ])
+
+const BashInputSchema = z.object({
+  command: z.string().min(1),
+  args: z.array(z.string()).default([]),
+})
 
 // SECURITY: always use execFile with argument arrays — never exec() or shell interpolation
 registerTool({
@@ -27,15 +33,14 @@ registerTool({
     required: ['command'],
   },
   requiresApproval: true,
-  async execute({ command, args = [] }, context) {
-    if (typeof command !== 'string') throw new Error('command must be a string')
-    if (!Array.isArray(args) || !args.every((a) => typeof a === 'string')) {
-      throw new Error('args must be an array of strings')
-    }
+  async execute(input, context) {
+    const { command, args } = BashInputSchema.parse(input)
+
     if (!ALLOWED_COMMANDS.has(command)) {
       throw new Error(`Command not permitted: ${command}. Allowed: ${[...ALLOWED_COMMANDS].join(', ')}`)
     }
-    const { stdout, stderr } = await execFileAsync(command, args as string[], {
+
+    const { stdout, stderr } = await execFileAsync(command, args, {
       cwd: context.workspaceDir,
       env: context.env,
       timeout: 60_000,

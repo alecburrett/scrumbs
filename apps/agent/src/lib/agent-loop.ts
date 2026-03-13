@@ -60,7 +60,7 @@ export async function runAgentTask(taskId: string, db: Db): Promise<void> {
     }
   }
 
-  async function checkCancelled(): Promise<boolean> {
+  const checkCancelled = async (): Promise<boolean> => {
     if (await isTaskCancelled(db, taskId)) {
       await db.update(agentTasks).set({ status: 'cancelled' }).where(eq(agentTasks.id, taskId))
       emit({ type: 'done', payload: { cancelled: true } })

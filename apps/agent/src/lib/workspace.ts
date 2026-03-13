@@ -1,8 +1,8 @@
 import { execFile } from 'node:child_process'
 import { promisify } from 'node:util'
+import { tmpdir } from 'node:os'
 import fs from 'node:fs/promises'
 import path from 'node:path'
-import { tmpdir } from 'node:os'
 
 const execFileAsync = promisify(execFile)
 const WORKSPACE_BASE = path.join(tmpdir(), 'scrumbs')
@@ -34,11 +34,16 @@ export async function createWorkspace(taskId: string, repo: string, token: strin
   validateRepoFormat(repo)
 
   const dir = path.join(WORKSPACE_BASE, taskId)
-  const askpassPath = path.join(WORKSPACE_BASE, `${taskId}-askpass.sh`)
+  const askpassPath = path.join(WORKSPACE_BASE, `${taskId}-askpass.mjs`)
 
   await fs.mkdir(WORKSPACE_BASE, { recursive: true })
 
-  await fs.writeFile(askpassPath, '#!/bin/sh\necho "$GIT_TOKEN"\n', { mode: 0o700 })
+  // Write GIT_ASKPASS helper script
+  await fs.writeFile(
+    askpassPath,
+    '#!/usr/bin/env node\nprocess.stdout.write((process.env.GIT_TOKEN ?? "") + "\\n")\n',
+    { mode: 0o700 }
+  )
 
   const gitEnv: NodeJS.ProcessEnv = {
     ...process.env,
