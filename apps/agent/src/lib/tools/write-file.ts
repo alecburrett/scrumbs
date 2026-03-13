@@ -16,9 +16,11 @@ registerTool({
   },
   requiresApproval: false,
   async execute({ path: filePath, content }, context) {
-    const resolved = validateWorkspacePath(context.workspaceDir, filePath as string)
+    if (typeof filePath !== 'string') throw new Error('path must be a string')
+    if (typeof content !== 'string') throw new Error('content must be a string')
+    const resolved = validateWorkspacePath(context.workspaceDir, filePath)
     await fs.mkdir(path.dirname(resolved), { recursive: true })
-    await fs.writeFile(resolved, content as string, 'utf-8')
+    await fs.writeFile(resolved, content, 'utf-8')
     return `Written: ${filePath}`
   },
 })

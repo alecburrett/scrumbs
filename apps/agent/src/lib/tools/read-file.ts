@@ -14,7 +14,8 @@ registerTool({
   },
   requiresApproval: false,
   async execute({ path: filePath }, context) {
-    const resolved = validateWorkspacePath(context.workspaceDir, filePath as string)
+    if (typeof filePath !== 'string') throw new Error('path must be a string')
+    const resolved = validateWorkspacePath(context.workspaceDir, filePath)
     const content = await fs.readFile(resolved, 'utf-8')
     return content
   },

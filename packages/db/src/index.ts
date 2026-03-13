@@ -13,7 +13,7 @@ export function createDb(connectionString: string) {
   const existing = instances.get(connectionString)
   if (existing) return existing
 
-  const client = postgres(connectionString, { max: 10, idle_timeout: 20 })
+  const client = postgres(connectionString, { max: 10, idle_timeout: 20, ssl: { rejectUnauthorized: false } })
   const db = drizzle(client, { schema })
   instances.set(connectionString, db)
   return db

@@ -3,7 +3,8 @@ const MAX_BACKOFF_MS = 30_000
 
 function isRetryableError(err: unknown): boolean {
   if (err && typeof err === 'object' && 'status' in err) {
-    return RETRYABLE_STATUS_CODES.has((err as { status: number }).status)
+    const status = (err as { status: unknown }).status
+    return typeof status === 'number' && RETRYABLE_STATUS_CODES.has(status)
   }
   return false
 }

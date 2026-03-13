@@ -1,4 +1,5 @@
 import Fastify from 'fastify'
+import { timingSafeEqual } from 'node:crypto'
 import { createDb } from '@scrumbs/db'
 import { taskRoutes } from './routes/tasks.js'
 
@@ -18,8 +19,14 @@ fastify.addHook('preHandler', async (request, reply) => {
   if (request.url === '/health') return
 
   const secret = request.headers['x-agent-secret']
-  if (!secret || secret !== process.env.AGENT_SERVICE_SECRET) {
-    reply.status(401).send({ error: 'Unauthorized' })
+  if (typeof secret !== 'string') {
+    return reply.status(401).send({ error: 'Unauthorized' })
+  }
+  const expected = process.env.AGENT_SERVICE_SECRET!
+  const provided = Buffer.from(secret)
+  const expectedBuf = Buffer.from(expected)
+  if (provided.length !== expectedBuf.length || !timingSafeEqual(provided, expectedBuf)) {
+    return reply.status(401).send({ error: 'Unauthorized' })
   }
 })
 

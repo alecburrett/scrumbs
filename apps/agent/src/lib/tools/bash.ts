@@ -28,10 +28,14 @@ registerTool({
   },
   requiresApproval: true,
   async execute({ command, args = [] }, context) {
-    if (!ALLOWED_COMMANDS.has(command as string)) {
+    if (typeof command !== 'string') throw new Error('command must be a string')
+    if (!Array.isArray(args) || !args.every((a) => typeof a === 'string')) {
+      throw new Error('args must be an array of strings')
+    }
+    if (!ALLOWED_COMMANDS.has(command)) {
       throw new Error(`Command not permitted: ${command}. Allowed: ${[...ALLOWED_COMMANDS].join(', ')}`)
     }
-    const { stdout, stderr } = await execFileAsync(command as string, args as string[], {
+    const { stdout, stderr } = await execFileAsync(command, args as string[], {
       cwd: context.workspaceDir,
       env: context.env,
       timeout: 60_000,

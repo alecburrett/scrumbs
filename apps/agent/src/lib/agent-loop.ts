@@ -60,26 +60,27 @@ export async function runAgentTask(taskId: string, db: Db): Promise<void> {
     }
   }
 
+  async function checkCancelled(): Promise<boolean> {
+    if (await isTaskCancelled(db, taskId)) {
+      await db.update(agentTasks).set({ status: 'cancelled' }).where(eq(agentTasks.id, taskId))
+      emit({ type: 'done', payload: { cancelled: true } })
+      return true
+    }
+    return false
+  }
+
   try {
     // === DUMMY ECHO PERSONA ===
     // Steps 1 and 3 emit messages; step 2 requires approval (for testing the gate)
 
     // Step 1
-    if (await isTaskCancelled(db, taskId)) {
-      await db.update(agentTasks).set({ status: 'cancelled' }).where(eq(agentTasks.id, taskId))
-      emit({ type: 'done', payload: { cancelled: true } })
-      return
-    }
+    if (await checkCancelled()) return
 
     emit({ type: 'message', payload: 'Echo: step 1 — starting task' })
     await new Promise((r) => setTimeout(r, 500))
 
     // Step 2 — approval gate
-    if (await isTaskCancelled(db, taskId)) {
-      await db.update(agentTasks).set({ status: 'cancelled' }).where(eq(agentTasks.id, taskId))
-      emit({ type: 'done', payload: { cancelled: true } })
-      return
-    }
+    if (await checkCancelled()) return
 
     const approvalPromise = waitForApproval(taskId) // register gate FIRST
     emit({
@@ -105,11 +106,7 @@ export async function runAgentTask(taskId: string, db: Db): Promise<void> {
     await new Promise((r) => setTimeout(r, 500))
 
     // Step 3
-    if (await isTaskCancelled(db, taskId)) {
-      await db.update(agentTasks).set({ status: 'cancelled' }).where(eq(agentTasks.id, taskId))
-      emit({ type: 'done', payload: { cancelled: true } })
-      return
-    }
+    if (await checkCancelled()) return
 
     emit({ type: 'message', payload: 'Echo: step 3 — task complete' })
     await new Promise((r) => setTimeout(r, 500))

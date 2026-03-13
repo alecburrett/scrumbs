@@ -16,10 +16,11 @@ registerTool({
   },
   requiresApproval: false,
   async execute({ message }, context) {
+    if (typeof message !== 'string') throw new Error('message must be a string')
     await execFileAsync('git', ['add', '-A'], { cwd: context.workspaceDir, env: context.env })
     const { stdout } = await execFileAsync(
       'git',
-      ['commit', '-m', message as string],
+      ['commit', '-m', message],
       { cwd: context.workspaceDir, env: context.env }
     )
     return stdout

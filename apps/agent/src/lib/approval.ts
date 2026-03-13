@@ -1,8 +1,18 @@
+const APPROVAL_TIMEOUT_MS = 300_000 // 5 minutes
+
 const gates = new Map<string, (approved: boolean) => void>()
 
 export function waitForApproval(taskId: string): Promise<boolean> {
   return new Promise((resolve) => {
-    gates.set(taskId, resolve)
+    const timeout = setTimeout(() => {
+      gates.delete(taskId)
+      resolve(false)
+    }, APPROVAL_TIMEOUT_MS)
+
+    gates.set(taskId, (approved: boolean) => {
+      clearTimeout(timeout)
+      resolve(approved)
+    })
   })
 }
 
