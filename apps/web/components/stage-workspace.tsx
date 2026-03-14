@@ -19,18 +19,6 @@ const STAGE_ORDER: Record<string, number> = {
   retro: 5,
 }
 
-/** Map stages to their primary persona */
-const STAGE_PERSONA: Record<string, PersonaName> = {
-  requirements: 'pablo',
-  prd: 'pablo',
-  planning: 'stella',
-  development: 'viktor',
-  review: 'rex',
-  qa: 'quinn',
-  deploy: 'dex',
-  retro: 'max',
-}
-
 function getPriorStage(stage: string): string | null {
   const idx = STAGE_ORDER[stage]
   if (idx === undefined || idx <= 0) return null
@@ -44,12 +32,19 @@ interface StageWorkspaceProps {
   stage: string
   input: Record<string, unknown>
   artifactTitle?: string
-  onComplete?: (output: unknown) => void
+  onApprove?: (artifact: string | null, taskId: string | null) => Promise<void>
+  /** Placeholder text for the user message input */
+  inputPlaceholder?: string
   /** Previous persona for the handoff card */
   previousPersona?: PersonaName
 }
 
 type ConnectionStatus = 'idle' | 'connecting' | 'connected' | 'done' | 'error'
+
+interface ChatMessage {
+  role: 'user' | 'assistant'
+  content: string
+}
 
 export function StageWorkspace({
   projectId,
@@ -58,12 +53,13 @@ export function StageWorkspace({
   stage,
   input,
   artifactTitle,
-  onComplete,
+  onApprove,
+  inputPlaceholder,
   previousPersona,
 }: StageWorkspaceProps) {
   const router = useRouter()
   const [status, setStatus] = useState<ConnectionStatus>('idle')
-  const [messages, setMessages] = useState<Array<{ role: string; content: string }>>([])
+  const [messages, setMessages] = useState<ChatMessage[]>([])
   const [artifact, setArtifact] = useState<string | null>(null)
   const [taskId, setTaskId] = useState<string | null>(null)
   const [pendingApproval, setPendingApproval] = useState(false)
@@ -71,9 +67,11 @@ export function StageWorkspace({
   const [budgetWarning, setBudgetWarning] = useState<string | null>(null)
   const [showHandoff, setShowHandoff] = useState(!!previousPersona)
   const [showStepBack, setShowStepBack] = useState(false)
+  const [userInput, setUserInput] = useState('')
+  const [approving, setApproving] = useState(false)
   const bottomRef = useRef<HTMLDivElement>(null)
-  const onCompleteRef = useRef(onComplete)
-  useEffect(() => { onCompleteRef.current = onComplete }, [onComplete])
+  // Accumulate conversation history across tasks for multi-turn
+  const conversationHistoryRef = useRef<ChatMessage[]>([])
 
   const colour = PERSONA_COLOURS[personaName]
   const displayName = PERSONA_DISPLAY_NAMES[personaName]
@@ -90,66 +88,73 @@ export function StageWorkspace({
   }, [messages])
 
   // Connect to an existing SSE stream for a given task
-  const connectToStream = useCallback(async (tid: string, sid: string) => {
+  const connectToStream = useCallback((tid: string, sid: string) => {
     setTaskId(tid)
     setStatus('connecting')
 
-    const configRes = await fetch('/api/config')
-    if (!configRes.ok) throw new Error('Failed to load config')
-    const { agentServiceUrl } = await configRes.json()
+    fetch('/api/config')
+      .then((res) => {
+        if (!res.ok) throw new Error('Failed to load config')
+        return res.json()
+      })
+      .then(({ agentServiceUrl }) => {
+        const url = `${agentServiceUrl}/tasks/${tid}/stream?sessionId=${sid}`
+        const es = new EventSource(url)
 
-    const url = `${agentServiceUrl}/tasks/${tid}/stream?sessionId=${sid}`
-    const es = new EventSource(url)
+        es.onopen = () => setStatus('connected')
 
-    es.onopen = () => setStatus('connected')
-
-    es.onmessage = (e) => {
-      try {
-        const event = JSON.parse(e.data) as SSEEvent
-        if (event.type === 'message') {
-          const payload = event.payload as { role?: string; content?: string }
-          if (payload.content) {
-            setMessages((prev) => [...prev, { role: payload.role ?? 'assistant', content: payload.content! }])
-            if (payload.role !== 'user' && payload.content.length > 200) {
-              setArtifact(payload.content)
+        es.onmessage = (e) => {
+          try {
+            const event = JSON.parse(e.data) as SSEEvent
+            if (event.type === 'message') {
+              const payload = event.payload as { role?: string; content?: string }
+              if (payload.content) {
+                const msg: ChatMessage = { role: (payload.role as 'user' | 'assistant') ?? 'assistant', content: payload.content }
+                setMessages((prev) => [...prev, msg])
+                // Track assistant messages for conversation history
+                if (msg.role === 'assistant') {
+                  conversationHistoryRef.current.push(msg)
+                }
+                // Use longer responses as artifact content
+                if (payload.role !== 'user' && payload.content.length > 200) {
+                  setArtifact(payload.content)
+                }
+              }
             }
+            if (event.type === 'approval_required') {
+              setPendingApproval(true)
+            }
+            if (event.type === 'done') {
+              setStatus('done')
+              es.close()
+            }
+            if (event.type === 'error') {
+              const payload = event.payload as { warning?: boolean; message?: string }
+              if (payload.warning) {
+                setBudgetWarning(payload.message ?? 'Token budget warning')
+              } else {
+                setError(payload.message ?? 'An error occurred')
+              }
+            }
+            if (event.type === 'context_summary') {
+              const payload = event.payload as { message?: string }
+              if (payload.message) {
+                setMessages((prev) => [...prev, { role: 'assistant', content: `_${payload.message}_` }])
+              }
+            }
+          } catch {
+            // ignore malformed events
           }
         }
-        if (event.type === 'approval_required') {
-          setPendingApproval(true)
-        }
-        if (event.type === 'done') {
-          setStatus('done')
+
+        es.onerror = () => {
+          setStatus((prev) => (prev === 'done' ? 'done' : 'error'))
           es.close()
-          const payload = event.payload as Record<string, unknown> | undefined
-          onCompleteRef.current?.(payload)
         }
-        if (event.type === 'error') {
-          const payload = event.payload as { warning?: boolean; message?: string }
-          if (payload.warning) {
-            setBudgetWarning(payload.message ?? 'Token budget warning')
-          } else {
-            setError(payload.message ?? 'An error occurred')
-          }
-        }
-        if (event.type === 'context_summary') {
-          const payload = event.payload as { content?: string }
-          if (payload.content) {
-            setMessages((prev) => [...prev, { role: 'assistant', content: payload.content! }])
-            if (payload.content.length > 200) {
-              setArtifact(payload.content)
-            }
-          }
-        }
-      } catch {
-        // ignore malformed events
-      }
-    }
-
-    es.onerror = () => {
-      setStatus((prev) => (prev === 'done' ? 'done' : 'error'))
-      es.close()
-    }
+      })
+      .catch(() => {
+        setStatus('error')
+      })
   }, [])
 
   // Auto-reconnect: check for an existing running task on mount
@@ -164,7 +169,7 @@ export function StageWorkspace({
         if (!res.ok || cancelled) return
         const { taskId: tid, sessionId: sid } = await res.json()
         if (!cancelled && tid && sid) {
-          await connectToStream(tid, sid)
+          connectToStream(tid, sid)
         }
       } catch {
         // No active task or network error — stay idle
@@ -174,21 +179,33 @@ export function StageWorkspace({
     return () => { cancelled = true }
   }, [projectId, sprintId, personaName, connectToStream])
 
-  const handleStart = useCallback(async () => {
+  /** Create an agent task and connect to its stream */
+  const startTask = useCallback(async (userMessage?: string) => {
     setStatus('connecting')
     setError(null)
-    setMessages([])
-    setArtifact(null)
 
     try {
-      // Create the agent task
+      // Build conversation history for the input
+      const history = conversationHistoryRef.current.map((m) => ({
+        role: m.role,
+        content: m.content,
+        timestamp: new Date().toISOString(),
+      }))
+
+      const taskInput = {
+        ...input,
+        stage,
+        ...(userMessage ? { rawRequirements: userMessage, userMessage } : {}),
+        ...(history.length > 0 ? { conversationHistory: history } : {}),
+      }
+
       const taskRes = await fetch(`/api/projects/${projectId}/tasks`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           personaName,
           sprintId,
-          input: { ...input, stage },
+          input: taskInput,
         }),
       })
       if (!taskRes.ok) {
@@ -197,12 +214,40 @@ export function StageWorkspace({
       }
 
       const { taskId: tid, sessionId } = await taskRes.json()
-      await connectToStream(tid, sessionId)
+      connectToStream(tid, sessionId)
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Unknown error')
       setStatus('error')
     }
   }, [projectId, sprintId, personaName, stage, input, connectToStream])
+
+  /** Handle sending a message (initial or follow-up) */
+  const handleSendMessage = useCallback(async () => {
+    const text = userInput.trim()
+    if (!text) return
+
+    // Add user message to display
+    const userMsg: ChatMessage = { role: 'user', content: text }
+    setMessages((prev) => [...prev, userMsg])
+    conversationHistoryRef.current.push(userMsg)
+    setUserInput('')
+    setArtifact(null)
+
+    await startTask(text)
+  }, [userInput, startTask])
+
+  /** Handle approve & continue */
+  const handleApprove = useCallback(async () => {
+    if (!onApprove) return
+    setApproving(true)
+    try {
+      await onApprove(artifact, taskId)
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Approval failed')
+    } finally {
+      setApproving(false)
+    }
+  }, [onApprove, artifact, taskId])
 
   const handleStepBackConfirm = useCallback(async () => {
     if (!sprintId || !priorStage) return
@@ -216,13 +261,19 @@ export function StageWorkspace({
         const err = await res.json().catch(() => ({ error: 'Step back failed' }))
         throw new Error(err.error ?? 'Step back failed')
       }
-      // Navigate to the prior stage page
       router.push(`/projects/${projectId}/sprints/${sprintId}/${priorStage}`)
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Step back failed')
       setShowStepBack(false)
     }
   }, [sprintId, priorStage, projectId, router])
+
+  const handleKeyDown = useCallback((e: React.KeyboardEvent) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault()
+      handleSendMessage()
+    }
+  }, [handleSendMessage])
 
   const statusDot = {
     idle: 'bg-slate-500',
@@ -231,6 +282,8 @@ export function StageWorkspace({
     done: 'bg-green-400',
     error: 'bg-red-400',
   }[status]
+
+  const showInput = status === 'idle' || status === 'done' || status === 'error'
 
   return (
     <>
@@ -269,18 +322,22 @@ export function StageWorkspace({
               </button>
             )}
           </div>
+
+          {/* Messages area */}
           <div className="flex-1 overflow-y-auto p-4 space-y-4">
             {messages.length === 0 && status === 'idle' && (
               <p className="text-slate-400 text-sm">
-                {displayName} will help you with {stage}. Click the button below to begin.
+                {inputPlaceholder
+                  ? `${displayName} is ready. Type a message below to begin.`
+                  : `${displayName} will help you with ${stage}. Type a message or click Start below.`}
               </p>
             )}
             {messages.map((msg, i) => (
               <PersonaMessage
                 key={i}
-                personaName={personaName}
+                personaName={msg.role === 'user' ? undefined : personaName}
                 content={msg.content}
-                requiresApproval={pendingApproval && i === messages.length - 1}
+                requiresApproval={pendingApproval && i === messages.length - 1 && msg.role === 'assistant'}
                 taskId={taskId ?? undefined}
               />
             ))}
@@ -292,27 +349,70 @@ export function StageWorkspace({
             {error && (
               <div className="p-3 bg-red-900/30 border border-red-800/50 rounded-lg text-sm text-red-400">
                 {error}
+                <button
+                  onClick={() => { setError(null); setStatus('idle') }}
+                  className="ml-2 underline text-red-300 hover:text-red-200"
+                >
+                  Dismiss
+                </button>
               </div>
             )}
             <div ref={bottomRef} />
           </div>
-          {status === 'idle' && (
-            <div className="p-4 border-t border-slate-800">
+
+          {/* Input area */}
+          <div className="p-4 border-t border-slate-800 space-y-2">
+            {showInput && (
+              <div className="flex gap-2">
+                <textarea
+                  value={userInput}
+                  onChange={(e) => setUserInput(e.target.value)}
+                  onKeyDown={handleKeyDown}
+                  placeholder={inputPlaceholder ?? `Message ${displayName}...`}
+                  rows={2}
+                  className="flex-1 px-3 py-2 bg-slate-800 border border-slate-700 rounded-lg text-white placeholder-slate-500 focus:outline-none focus:border-blue-500 resize-none text-sm"
+                />
+                <button
+                  onClick={handleSendMessage}
+                  disabled={!userInput.trim() || status === 'connecting'}
+                  className="px-4 py-2 text-white font-medium rounded-lg transition-colors disabled:opacity-50 self-end"
+                  style={{ backgroundColor: colour }}
+                >
+                  Send
+                </button>
+              </div>
+            )}
+
+            {/* Start button (if no message input needed) */}
+            {status === 'idle' && !inputPlaceholder && messages.length === 0 && (
               <button
-                onClick={handleStart}
+                onClick={() => startTask()}
                 className="w-full py-2 text-white font-semibold rounded-lg transition-colors"
                 style={{ backgroundColor: colour }}
               >
                 Start with {displayName}
               </button>
-            </div>
-          )}
-          {status === 'connecting' && (
-            <div className="p-4 border-t border-slate-800 text-center text-sm text-slate-500">
-              Connecting...
-            </div>
-          )}
+            )}
+
+            {status === 'connecting' && (
+              <div className="text-center text-sm text-slate-500">
+                Connecting...
+              </div>
+            )}
+
+            {/* Approve & Continue button */}
+            {status === 'done' && onApprove && (
+              <button
+                onClick={handleApprove}
+                disabled={approving}
+                className="w-full py-2 bg-green-600 text-white font-semibold rounded-lg hover:bg-green-700 disabled:opacity-50 transition-colors"
+              >
+                {approving ? 'Approving...' : `Approve ${artifactTitle ?? currentStageLabel}`}
+              </button>
+            )}
+          </div>
         </div>
+
         {/* Artifact Panel */}
         <div className="w-2/5 p-6 overflow-y-auto">
           <h2 className="text-lg font-semibold mb-4 text-slate-300">{artifactTitle ?? stage}</h2>

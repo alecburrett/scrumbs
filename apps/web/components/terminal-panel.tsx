@@ -10,6 +10,7 @@ interface TerminalPanelProps {
   sessionId: string
   agentServiceUrl: string
   onStoryStatus?: (storyId: string, status: string) => void
+  onDone?: () => void
 }
 
 export function TerminalPanel({
@@ -17,13 +18,16 @@ export function TerminalPanel({
   sessionId,
   agentServiceUrl,
   onStoryStatus,
+  onDone,
 }: TerminalPanelProps) {
   const [events, setEvents] = useState<SSEEvent[]>([])
   const [pendingApproval, setPendingApproval] = useState(false)
   const [connected, setConnected] = useState(false)
   const bottomRef = useRef<HTMLDivElement>(null)
   const onStoryStatusRef = useRef(onStoryStatus)
+  const onDoneRef = useRef(onDone)
   useEffect(() => { onStoryStatusRef.current = onStoryStatus })
+  useEffect(() => { onDoneRef.current = onDone })
 
   useEffect(() => {
     const url = `${agentServiceUrl}/tasks/${taskId}/stream?sessionId=${sessionId}`
@@ -42,7 +46,10 @@ export function TerminalPanel({
         if (event.type === 'approval_required') {
           setPendingApproval(true)
         }
-        if (event.type === 'done') es.close()
+        if (event.type === 'done') {
+          es.close()
+          onDoneRef.current?.()
+        }
         setEvents((prev) => [...prev, event])
       } catch {}
     }
