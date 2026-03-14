@@ -52,6 +52,9 @@ UPDATE "agent_task" SET "project_id" = (
   SELECT "project_id" FROM "sprint" WHERE "sprint"."id" = "agent_task"."sprint_id"
 ) WHERE "project_id" IS NULL AND "sprint_id" IS NOT NULL;
 
+-- Backfill stage for existing tasks that have no stage set
+UPDATE "agent_task" SET "stage" = 'development' WHERE "stage" IS NULL;
+
 -- Now make project_id and stage NOT NULL (after backfill)
 -- Note: if there are rows without sprint_id, they'll need manual fixing
 ALTER TABLE "agent_task" ALTER COLUMN "project_id" SET NOT NULL;
@@ -81,20 +84,31 @@ ALTER TABLE "artifact" ADD CONSTRAINT "artifact_project_id_project_id_fk"
   FOREIGN KEY ("project_id") REFERENCES "project"("id") ON DELETE CASCADE;
 
 -- Conversation table: restructure completely
--- Drop old columns, add new ones
+-- Step 1: Add new columns as nullable first
+ALTER TABLE "conversation" ADD COLUMN IF NOT EXISTS "project_id" text;
+ALTER TABLE "conversation" ADD COLUMN IF NOT EXISTS "sprint_id" text;
+ALTER TABLE "conversation" ADD COLUMN IF NOT EXISTS "stage" "stage";
+ALTER TABLE "conversation" ADD COLUMN IF NOT EXISTS "persona" "persona_name";
+ALTER TABLE "conversation" ADD COLUMN IF NOT EXISTS "messages" jsonb NOT NULL DEFAULT '[]';
+
+-- Step 2: Backfill project_id from agent_task before dropping the FK column
+UPDATE "conversation" SET "project_id" = (
+  SELECT "project_id" FROM "agent_task" WHERE "agent_task"."id" = "conversation"."agent_task_id"
+) WHERE "project_id" IS NULL AND "agent_task_id" IS NOT NULL;
+
+-- Step 3: Set defaults for any remaining NULLs
+UPDATE "conversation" SET "stage" = 'requirements' WHERE "stage" IS NULL;
+UPDATE "conversation" SET "persona" = 'pablo' WHERE "persona" IS NULL;
+
+-- Step 4: Now drop old columns
 ALTER TABLE "conversation" DROP COLUMN IF EXISTS "agent_task_id";
 ALTER TABLE "conversation" DROP COLUMN IF EXISTS "role";
 ALTER TABLE "conversation" DROP COLUMN IF EXISTS "content";
-ALTER TABLE "conversation" ADD COLUMN IF NOT EXISTS "project_id" text NOT NULL DEFAULT '';
-ALTER TABLE "conversation" ADD COLUMN IF NOT EXISTS "sprint_id" text;
-ALTER TABLE "conversation" ADD COLUMN IF NOT EXISTS "stage" "stage" NOT NULL DEFAULT 'requirements';
-ALTER TABLE "conversation" ADD COLUMN IF NOT EXISTS "persona" "persona_name" NOT NULL DEFAULT 'pablo';
-ALTER TABLE "conversation" ADD COLUMN IF NOT EXISTS "messages" jsonb NOT NULL DEFAULT '[]';
 
--- Remove defaults used for migration
-ALTER TABLE "conversation" ALTER COLUMN "project_id" DROP DEFAULT;
-ALTER TABLE "conversation" ALTER COLUMN "stage" DROP DEFAULT;
-ALTER TABLE "conversation" ALTER COLUMN "persona" DROP DEFAULT;
+-- Step 5: Apply NOT NULL constraints after backfill
+ALTER TABLE "conversation" ALTER COLUMN "project_id" SET NOT NULL;
+ALTER TABLE "conversation" ALTER COLUMN "stage" SET NOT NULL;
+ALTER TABLE "conversation" ALTER COLUMN "persona" SET NOT NULL;
 
 -- Add FK constraints
 ALTER TABLE "conversation" ADD CONSTRAINT "conversation_project_id_project_id_fk"

@@ -27,10 +27,10 @@ export async function POST(
 
   const body = await req.json()
   const { personaName, sprintId, input } = body
-  const stage = input?.stage as string | undefined
+  const stage = input?.stage
 
-  if (!stage) {
-    return NextResponse.json({ error: 'stage is required in input' }, { status: 400 })
+  if (typeof stage !== 'string' || !stage) {
+    return NextResponse.json({ error: 'A non-empty string for stage is required in input' }, { status: 400 })
   }
 
   const result = await createAgentTask({
