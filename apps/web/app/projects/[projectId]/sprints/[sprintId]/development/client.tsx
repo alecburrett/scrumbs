@@ -30,6 +30,7 @@ export function DevelopmentClient({
   const [taskId, setTaskId] = useState<string | null>(null)
   const [sessionId, setSessionId] = useState<string | null>(null)
   const [agentServiceUrl, setAgentServiceUrl] = useState<string | null>(null)
+  const [agentServiceSecret, setAgentServiceSecret] = useState<string | null>(null)
   const [starting, setStarting] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [isDone, setIsDone] = useState(false)
@@ -52,6 +53,7 @@ export function DevelopmentClient({
       if (!configRes.ok) throw new Error('Failed to load config')
       const config = await configRes.json()
       setAgentServiceUrl(config.agentServiceUrl)
+      setAgentServiceSecret(config.agentServiceSecret ?? null)
 
       const taskRes = await fetch(`/api/projects/${projectId}/tasks`, {
         method: 'POST',
@@ -144,6 +146,7 @@ export function DevelopmentClient({
                 taskId={taskId}
                 sessionId={sessionId}
                 agentServiceUrl={agentServiceUrl}
+                agentServiceSecret={agentServiceSecret ?? undefined}
                 onStoryStatus={handleStoryStatus}
                 onDone={handleDone}
               />

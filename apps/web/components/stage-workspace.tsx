@@ -97,8 +97,8 @@ export function StageWorkspace({
         if (!res.ok) throw new Error('Failed to load config')
         return res.json()
       })
-      .then(({ agentServiceUrl }) => {
-        const url = `${agentServiceUrl}/tasks/${tid}/stream?sessionId=${sid}`
+      .then(({ agentServiceUrl, agentServiceSecret }) => {
+        const url = `${agentServiceUrl}/tasks/${tid}/stream?sessionId=${sid}${agentServiceSecret ? `&secret=${encodeURIComponent(agentServiceSecret)}` : ''}`
         const es = new EventSource(url)
 
         es.onopen = () => setStatus('connected')

@@ -10,5 +10,6 @@ export async function GET() {
     return NextResponse.json({ error: 'Agent service not configured' }, { status: 503 })
   }
 
-  return NextResponse.json({ agentServiceUrl })
+  const agentServiceSecret = process.env.AGENT_SERVICE_SECRET
+  return NextResponse.json({ agentServiceUrl, agentServiceSecret })
 }

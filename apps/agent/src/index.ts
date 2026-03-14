@@ -34,10 +34,13 @@ const fastify = Fastify({ logger: true })
 fastify.addHook('preHandler', async (request, reply) => {
   if (request.routeOptions?.url === '/health') return
 
-  const raw = request.headers['x-agent-secret']
-  if (Array.isArray(raw)) {
+  // Accept secret from header (server-to-server) or query param (browser EventSource)
+  const headerVal = request.headers['x-agent-secret']
+  if (Array.isArray(headerVal)) {
     return reply.status(400).send({ error: 'Bad Request' })
   }
+  const queryVal = (request.query as Record<string, string | undefined>)?.secret
+  const raw = headerVal ?? queryVal
 
   if (!raw) {
     return reply.status(401).send({ error: 'Unauthorized' })
