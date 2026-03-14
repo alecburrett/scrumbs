@@ -34,7 +34,13 @@ export default async function ProjectPage({
       {projectSprints.length === 0 ? (
         <div className="text-center py-16 text-slate-400">
           <p className="text-lg mb-4">No sprints yet</p>
-          <p className="text-sm">Pablo will help you kick off your first sprint</p>
+          <p className="text-sm mb-6">Pablo will help you capture requirements and build a PRD before your first sprint.</p>
+          <Link
+            href={`/projects/${project.id}/requirements`}
+            className="inline-block px-6 py-3 bg-amber-500 text-white font-semibold rounded-lg hover:bg-amber-600 transition-colors"
+          >
+            Start with Pablo
+          </Link>
         </div>
       ) : (
         <div className="space-y-3">
