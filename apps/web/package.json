@@ -16,13 +16,13 @@
     "next": "~15.2.x",
     "next-auth": "5.0.0-beta.30",
     "react": "~19.x",
-    "react-dom": "~19.x"
+    "react-dom": "~19.x",
+    "tailwindcss": "~3.x"
   },
   "devDependencies": {
     "@types/node": "~20.x",
     "@types/react": "~19.x",
     "@types/react-dom": "~19.x",
-    "tailwindcss": "~3.x",
     "typescript": "~5.4.x"
   }
 }
