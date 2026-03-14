@@ -9,6 +9,8 @@ import { resolveApproval } from '../lib/approval.js'
 import { checkConcurrencyLimit, ConcurrencyLimitError } from '../lib/cost-guard.js'
 import { z } from 'zod'
 
+const RETRY_AFTER_SECONDS = 30
+
 const CreateTaskSchema = z.object({
   projectId: z.string().min(1),
   sprintId: z.string().min(1).optional(),
@@ -39,7 +41,7 @@ export const taskRoutes: FastifyPluginAsync<{ db: Db }> = async (fastify, opts) 
         await checkConcurrencyLimit(db, userId)
       } catch (err) {
         if (err instanceof ConcurrencyLimitError) {
-          return reply.status(429).header('Retry-After', '30').send({
+          return reply.status(429).header('Retry-After', String(RETRY_AFTER_SECONDS)).send({
             error: err.message,
           })
         }
