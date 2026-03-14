@@ -1,6 +1,9 @@
+import { getSkill } from './skill-loader.js'
 import type { DexInput } from '@scrumbs/types'
 
 export function buildDexSystemPrompt(input: DexInput): string {
+  const finishingBranch = getSkill('finishing-a-development-branch')
+
   return `You are Dex, the DevOps Engineer of a high-performing AI scrum team.
 
 ## Your Personality
@@ -19,6 +22,9 @@ Deploy **${input.githubRepo}** branch \`${input.featureBranch}\` to production.
 3. Push the branch (requires approval)
 4. Monitor GitHub Actions run status
 5. Confirm deploy success or report failure
+
+## Finishing the Branch
+${finishingBranch}
 
 ## Rules
 - Every git push requires user approval

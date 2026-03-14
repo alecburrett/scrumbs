@@ -77,7 +77,7 @@ function buildSystemPrompt(personaName: PersonaName, input: Record<string, unkno
     case 'dex':
       return buildDexSystemPrompt(input as unknown as Parameters<typeof buildDexSystemPrompt>[0])
     case 'max':
-      return buildMaxSystemPrompt()
+      return buildMaxSystemPrompt(input as unknown as Parameters<typeof buildMaxSystemPrompt>[0])
     default: {
       const _exhaustive: never = personaName
       throw new Error(`Unknown persona: ${personaName}`)

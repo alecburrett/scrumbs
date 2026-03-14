@@ -17,7 +17,9 @@ export function PlanningClient({ projectId, sprintId, sprintNumber, prdContent }
       personaName="stella"
       stage="planning"
       input={{
+        persona: 'stella',
         stage: 'planning',
+        sprintId,
         sprintNumber,
         ...(prdContent ? { prdContent } : {}),
       }}

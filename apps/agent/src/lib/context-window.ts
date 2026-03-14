@@ -1,6 +1,6 @@
 import Anthropic from '@anthropic-ai/sdk'
 
-const CONTEXT_THRESHOLD = 120_000
+const CONTEXT_THRESHOLD = 72_000
 
 export function estimateTokens(messages: Anthropic.MessageParam[]): number {
   return Math.ceil(JSON.stringify(messages).length / 4)

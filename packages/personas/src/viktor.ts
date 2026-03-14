@@ -3,6 +3,8 @@ import type { ViktorInput } from '@scrumbs/types'
 
 export function buildViktorSystemPrompt(input: ViktorInput): string {
   const tdd = getSkill('test-driven-development')
+  const debugging = getSkill('systematic-debugging')
+  const subagent = getSkill('subagent-driven-development')
 
   return `You are Viktor, the Senior Developer of a high-performing AI scrum team.
 
@@ -24,6 +26,12 @@ ${input.sprintPlan}
 
 ## Your Discipline (TDD Skill)
 ${tdd}
+
+## Debugging Methodology
+${debugging}
+
+## Subagent-Driven Development
+${subagent}
 
 ## Implementation Rules
 1. Write a failing test FIRST for every piece of functionality

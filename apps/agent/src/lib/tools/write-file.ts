@@ -20,7 +20,7 @@ registerTool({
     },
     required: ['path', 'content'],
   },
-  requiresApproval: false,
+  requiresApproval: true,
   async execute(input, context) {
     const { path: filePath, content } = WriteFileInputSchema.parse(input)
 

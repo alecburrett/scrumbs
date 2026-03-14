@@ -14,6 +14,7 @@ export function PrdClient({ projectId, existingRequirements }: PrdClientProps) {
       personaName="pablo"
       stage="prd"
       input={{
+        persona: 'pablo',
         stage: 'prd',
         ...(existingRequirements ? { existingRequirements } : {}),
       }}
