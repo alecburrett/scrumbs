@@ -64,7 +64,7 @@ export default async function SprintPlanningPage({
 
       // Get carry-forward stories (incomplete stories moved to this sprint)
       const carriedStories = await db
-        .select({ title: stories.title, description: stories.description })
+        .select({ title: stories.title, description: stories.description, status: stories.status })
         .from(stories)
         .where(
           and(

@@ -8,7 +8,7 @@ interface PlanningClientProps {
   sprintNumber: number
   prdContent?: string
   priorRetro?: string
-  carryForwardStories?: Array<{ title: string; description: string | null }>
+  carryForwardStories?: Array<{ title: string; description: string | null; status: string }>
 }
 
 export function PlanningClient({ projectId, sprintId, sprintNumber, prdContent, priorRetro, carryForwardStories }: PlanningClientProps) {

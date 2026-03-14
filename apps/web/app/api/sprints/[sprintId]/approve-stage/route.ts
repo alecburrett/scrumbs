@@ -217,7 +217,7 @@ export async function POST(
             const repo = project.githubRepo
 
             // Extract PR number from URL
-            const prNumber = parseInt(sprint.prUrl.split('/').pop() ?? '0', 10)
+            const prNumber = parseInt(sprint.prUrl.match(/\/pull\/(\d+)/)?.[1] ?? '0', 10)
             if (prNumber > 0) {
               // Check if PR is merged
               const { data: pr } = await octokit.rest.pulls.get({
