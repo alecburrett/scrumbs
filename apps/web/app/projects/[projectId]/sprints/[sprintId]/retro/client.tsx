@@ -34,7 +34,9 @@ export function RetroClient({
       personaName="stella"
       stage="retro"
       input={{
+        persona: 'stella',
         stage: 'retro',
+        sprintId,
         sprintNumber,
         completedStories: stories,
       }}

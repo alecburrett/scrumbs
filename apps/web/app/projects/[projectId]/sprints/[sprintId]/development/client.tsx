@@ -57,13 +57,16 @@ export function DevelopmentClient({
           personaName: 'viktor',
           sprintId,
           input: {
+            persona: 'viktor',
             stage: 'development',
+            sprintId,
             sprintNumber,
             featureBranch: featureBranch ?? `sprint-${sprintNumber}`,
             stories: stories.map((s) => ({
               id: s.id,
               title: s.title,
               description: s.description,
+              status: s.status,
             })),
           },
         }),

@@ -17,7 +17,9 @@ export function QaClient({ projectId, sprintId, sprintNumber, featureBranch }: Q
       personaName="quinn"
       stage="qa"
       input={{
+        persona: 'quinn',
         stage: 'qa',
+        sprintId,
         sprintNumber,
         featureBranch: featureBranch ?? `sprint-${sprintNumber}`,
       }}

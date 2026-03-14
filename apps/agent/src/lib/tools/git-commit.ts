@@ -19,7 +19,7 @@ registerTool({
     },
     required: ['message'],
   },
-  requiresApproval: false,
+  requiresApproval: true,
   async execute(input, context) {
     const { message } = GitCommitInputSchema.parse(input)
     await execFileAsync('git', ['add', '-A'], { cwd: context.workspaceDir, env: context.env })

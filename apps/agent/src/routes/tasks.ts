@@ -6,7 +6,10 @@ import { randomUUID } from 'node:crypto'
 import { runAgentTask, registerEmitter, unregisterEmitter } from '../lib/agent-loop.js'
 import { SSEEmitter } from '../lib/sse.js'
 import { resolveApproval } from '../lib/approval.js'
+import { checkConcurrencyLimit, ConcurrencyLimitError } from '../lib/cost-guard.js'
 import { z } from 'zod'
+
+const RETRY_AFTER_SECONDS = 30
 
 const CreateTaskSchema = z.object({
   projectId: z.string().min(1),
@@ -32,6 +35,19 @@ export const taskRoutes: FastifyPluginAsync<{ db: Db }> = async (fastify, opts) 
         })
       }
       const { projectId, sprintId, stage, personaName, input, userId } = parseResult.data
+
+      // Pre-check concurrency limit before creating the task
+      try {
+        await checkConcurrencyLimit(db, userId)
+      } catch (err) {
+        if (err instanceof ConcurrencyLimitError) {
+          return reply.status(429).header('Retry-After', String(RETRY_AFTER_SECONDS)).send({
+            error: err.message,
+          })
+        }
+        throw err
+      }
+
       const sessionId = randomUUID()
 
       const [task] = await db

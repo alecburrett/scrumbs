@@ -17,7 +17,9 @@ export function ReviewClient({ projectId, sprintId, sprintNumber, featureBranch 
       personaName="rex"
       stage="review"
       input={{
+        persona: 'rex',
         stage: 'review',
+        sprintId,
         sprintNumber,
         featureBranch: featureBranch ?? `sprint-${sprintNumber}`,
       }}

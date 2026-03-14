@@ -8,7 +8,7 @@ export function RequirementsClient({ projectId }: { projectId: string }) {
       projectId={projectId}
       personaName="pablo"
       stage="requirements"
-      input={{ stage: 'requirements' }}
+      input={{ persona: 'pablo', stage: 'requirements' }}
       artifactTitle="Requirements"
     />
   )

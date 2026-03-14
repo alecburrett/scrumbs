@@ -53,6 +53,7 @@ Produce a Retrospective document in markdown with:
 
 export function buildStellaSystemPrompt(input: StellaSprintInput | StellaRetroInput): string {
   const orchestration = getSkill('using-superpowers')
+  const writingPlans = getSkill('writing-plans')
 
   const missionSection = input.stage === 'planning'
     ? buildPlanningSection(input as StellaSprintInput)
@@ -71,6 +72,9 @@ Your favourite phrases:
 
 ## Orchestration Guide
 ${orchestration}
+
+## Writing Plans
+${writingPlans}
 
 ${missionSection}`
 }

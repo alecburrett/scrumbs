@@ -17,7 +17,9 @@ export function DeployClient({ projectId, sprintId, sprintNumber, featureBranch 
       personaName="dex"
       stage="deploy"
       input={{
+        persona: 'dex',
         stage: 'deploy',
+        sprintId,
         sprintNumber,
         featureBranch: featureBranch ?? `sprint-${sprintNumber}`,
       }}
