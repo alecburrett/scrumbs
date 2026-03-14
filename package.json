@@ -11,7 +11,9 @@
     "dev": "npm run dev --workspace=apps/web",
     "db:migrate": "npm run migrate --workspace=packages/db",
     "test": "vitest run",
-    "test:watch": "vitest"
+    "test:watch": "vitest",
+    "test:build-smoke": "vitest run apps/web/__tests__/build-smoke",
+    "test:deploy-smoke": "vitest run apps/web/__tests__/deploy-smoke"
   },
   "engines": {
     "node": ">=20"
