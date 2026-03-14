@@ -4,7 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "build": "rm -rf .next/cache && next build && cp -r .next/static .next/standalone/apps/web/.next/static",
+    "build": "rm -rf .next/cache/webpack && next build && cp -r .next/static .next/standalone/apps/web/.next/static",
     "start": "node .next/standalone/apps/web/server.js"
   },
   "dependencies": {
