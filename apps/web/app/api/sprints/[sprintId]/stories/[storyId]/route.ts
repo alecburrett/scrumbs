@@ -6,7 +6,7 @@ import { eq } from 'drizzle-orm'
 import type { StoryStatus } from '@scrumbs/types'
 import { getStoryIfOwned } from '@/lib/ownership'
 
-const VALID_STORY_STATUSES: StoryStatus[] = ['todo', 'in-progress', 'done']
+const VALID_STORY_STATUSES: StoryStatus[] = ['todo', 'in_progress', 'done']
 
 export async function PATCH(
   req: NextRequest,

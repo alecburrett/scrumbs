@@ -22,9 +22,7 @@ ${debugging}
 ## Your Mission
 Run QA verification for **${input.githubRepo}** on branch \`${input.featureBranch}\`.
 
-## Test Runner
-${input.testRunner}
-
+${input.testReportFromReview ? `## Test Report from Review\n${input.testReportFromReview}\n` : ''}
 ## QA Process
 1. Run the full test suite using run_tests
 2. Identify any test failures — note each specifically

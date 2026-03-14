@@ -18,7 +18,7 @@ export function KanbanStrip({ initialStories }: KanbanStripProps) {
 
   const columns: { key: StoryStatus; label: string }[] = [
     { key: 'todo', label: 'To Do' },
-    { key: 'in-progress', label: 'In Progress' },
+    { key: 'in_progress', label: 'In Progress' },
     { key: 'done', label: 'Done' },
   ]
 

@@ -27,13 +27,21 @@ export async function POST(
 
   const body = await req.json()
   const { personaName, sprintId, input } = body
+  const stage = input?.stage
+
+  if (typeof stage !== 'string' || !stage) {
+    return NextResponse.json({ error: 'A non-empty string for stage is required in input' }, { status: 400 })
+  }
 
   const result = await createAgentTask({
+    projectId,
     personaName,
     sprintId: sprintId ?? undefined,
+    stage,
     userId: session.user.id,
     input: {
       ...input,
+      projectId,
       projectName: project.name,
       githubRepo: `${project.githubOwner}/${project.githubRepo}`,
       ...(account?.access_token ? { githubToken: account.access_token } : {}),

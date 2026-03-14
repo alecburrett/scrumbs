@@ -1,5 +1,7 @@
 interface CreateTaskParams {
+  projectId: string
   sprintId?: string
+  stage: string
   personaName: string
   userId: string
   input: unknown

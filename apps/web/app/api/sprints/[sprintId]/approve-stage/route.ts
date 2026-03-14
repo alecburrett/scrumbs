@@ -120,7 +120,7 @@ export async function POST(
               sprintId,
               title: s.title,
               description: s.description ?? null,
-              order: i,
+              sortOrder: i,
               status: 'todo' as const,
             }))
           )
@@ -171,9 +171,11 @@ export async function POST(
           base: repoData.default_branch,
         })
 
-        // prUrl not in schema, but we can store it; for now just advance status
-        // If prUrl column exists in future, update it here
-        void pr
+        // Store PR URL on the sprint
+        await db
+          .update(sprints)
+          .set({ prUrl: pr.html_url })
+          .where(eq(sprints.id, sprintId))
 
         break
       }
@@ -212,11 +214,12 @@ export async function POST(
   // Create artifact after transition is validated
   if (body.artifactContent && body.artifactType && body.agentTaskId) {
     await db.insert(artifacts).values({
+      projectId: project.id,
       agentTaskId: body.agentTaskId,
       sprintId,
       type: body.artifactType,
       contentMd: body.artifactContent,
-      status: 'active',
+      status: 'current',
     })
   }
 

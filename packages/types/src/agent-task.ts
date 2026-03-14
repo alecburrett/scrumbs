@@ -8,6 +8,16 @@ export type AgentTaskStatus =
   | 'failed'
   | 'cancelled'
 
+export type Stage =
+  | 'requirements'
+  | 'prd'
+  | 'planning'
+  | 'development'
+  | 'review'
+  | 'qa'
+  | 'deploy'
+  | 'retro'
+
 export type SSEEventType =
   | 'tool_call'
   | 'tool_output'
@@ -32,63 +42,140 @@ export interface SSEEvent {
   timestamp: string
 }
 
-// Persona input types
+// --- Input shapes (sent to agent service) ---
+
 export interface PabloInput {
+  persona: 'pablo'
+  stage: 'requirements' | 'prd'
+  projectId: string
   projectName: string
   githubRepo: string
+  conversationHistory?: MessageRecord[]
   rawRequirements?: string
   existingRequirements?: string
 }
 
 export interface StellaSprintInput {
+  persona: 'stella'
+  stage: 'planning'
+  projectId: string
+  sprintId: string
   projectName: string
   prdContent: string
-  previousSprintSummary?: string
+  priorRetro?: string
+  carryForwardStories?: StoryRecord[]
   githubRepo: string
 }
 
 export interface StellaRetroInput {
+  persona: 'stella'
+  stage: 'retro'
+  projectId: string
+  sprintId: string
   projectName: string
   sprintNumber: number
-  completedStories: Array<{ title: string; status: string }>
+  completedStories: StoryRecord[]
   githubRepo: string
 }
 
 export interface ViktorInput {
+  persona: 'viktor'
+  stage: 'development'
+  projectId: string
+  sprintId: string
+  stories: StoryRecord[]
   sprintPlan: string
   featureBranch: string
-  workspaceDir: string
   githubRepo: string
-  stories: Array<{ id: string; title: string; description: string }>
+  githubToken: string
+  workspaceDir?: string
 }
 
 export interface RexInput {
-  prDiff: string
-  prNumber: number
-  githubRepo: string
+  persona: 'rex'
+  stage: 'review'
+  projectId: string
+  sprintId: string
+  prUrl: string
+  prdContent: string
   sprintPlan: string
+  githubRepo: string
+  githubToken: string
 }
 
 export interface QuinnInput {
+  persona: 'quinn'
+  stage: 'qa'
+  projectId: string
+  sprintId: string
   featureBranch: string
-  workspaceDir: string
-  testRunner: string
   githubRepo: string
+  githubToken: string
+  testReportFromReview?: string
+  workspaceDir?: string
 }
 
 export interface DexInput {
-  featureBranch: string
+  persona: 'dex'
+  stage: 'deploy'
+  projectId: string
+  sprintId: string
   githubRepo: string
-  workspaceDir: string
+  featureBranch: string
+  defaultBranch: string
+  githubToken: string
+  workspaceDir?: string
 }
 
-export interface AgentTaskInput {
-  pablo: PabloInput
-  stella_sprint: StellaSprintInput
-  stella_retro: StellaRetroInput
-  viktor: ViktorInput
-  rex: RexInput
-  quinn: QuinnInput
-  dex: DexInput
-  max: Record<string, never>
+export interface MaxInput {
+  persona: 'max'
+  stage: 'development'
+  projectId: string
+  sprintId: string
+  githubRepo: string
+  githubToken: string
+  featureBranch: string
+}
+
+export type AgentTaskInput =
+  | PabloInput
+  | StellaSprintInput
+  | StellaRetroInput
+  | ViktorInput
+  | RexInput
+  | QuinnInput
+  | DexInput
+  | MaxInput
+
+// --- Output shape (returned from agent service) ---
+
+export interface AgentTaskOutput {
+  summary: string
+  artifactsCreated: string[]
+  storiesUpdated?: Array<{ storyId: string; newStatus: string }>
+  errors?: string[]
+}
+
+// --- Supporting types ---
+
+export interface StoryRecord {
+  id: string
+  title: string
+  description?: string
+  points?: number
+  status: string
+  acceptanceCriteria?: string
+}
+
+export interface MessageRecord {
+  role: 'user' | 'assistant'
+  content: string
+  timestamp: string
+  persona?: PersonaName
+  toolCalls?: Array<{
+    toolName: string
+    input: Record<string, unknown>
+    output?: string
+    approved?: boolean
+  }>
 }
