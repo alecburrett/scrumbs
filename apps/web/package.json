@@ -13,8 +13,10 @@
     "@scrumbs/db": "*",
     "@scrumbs/personas": "*",
     "@scrumbs/types": "*",
+    "autoprefixer": "^10.4.27",
     "next": "~15.2.x",
     "next-auth": "5.0.0-beta.30",
+    "postcss": "^8.5.8",
     "react": "~19.x",
     "react-dom": "~19.x",
     "tailwindcss": "~3.x"
