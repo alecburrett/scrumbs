@@ -1,9 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { auth } from '@/auth'
 import { db } from '@/lib/db'
-import { sprints, stories } from '@scrumbs/db'
+import { sprints, stories, projects, accounts } from '@scrumbs/db'
 import { eq, and, inArray } from 'drizzle-orm'
 import { getSprintIfOwned } from '@/lib/ownership'
+import { createOctokit } from '@/lib/github'
+
+interface RetroBody {
+  retroContent?: string
+}
 
 export async function POST(
   req: NextRequest,
@@ -21,6 +26,45 @@ export async function POST(
       { error: 'Sprint must be complete before starting retro' },
       { status: 400 }
     )
+  }
+
+  const body = (await req.json().catch(() => ({}))) as RetroBody
+
+  // Commit retro content to GitHub if available
+  if (body.retroContent && currentSprint.featureBranch) {
+    try {
+      const [project] = await db
+        .select()
+        .from(projects)
+        .where(eq(projects.id, currentSprint.projectId))
+
+      const [account] = await db
+        .select()
+        .from(accounts)
+        .where(
+          and(
+            eq(accounts.userId, session.user.id),
+            eq(accounts.provider, 'github')
+          )
+        )
+        .limit(1)
+
+      if (project && account?.access_token) {
+        const octokit = createOctokit(account.access_token)
+        const content = Buffer.from(body.retroContent).toString('base64')
+        await octokit.rest.repos.createOrUpdateFileContents({
+          owner: project.githubOwner,
+          repo: project.githubRepo,
+          path: `sprints/sprint-${currentSprint.number}-retro.md`,
+          message: `Add sprint ${currentSprint.number} retrospective`,
+          content,
+          branch: currentSprint.featureBranch,
+        })
+      }
+    } catch {
+      // Non-blocking: log but don't fail the retro
+      console.error('Failed to commit retro to GitHub')
+    }
   }
 
   // Calculate next sprint number safely

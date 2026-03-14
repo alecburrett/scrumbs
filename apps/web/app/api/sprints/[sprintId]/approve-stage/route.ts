@@ -14,6 +14,7 @@ interface ApproveBody {
   artifactType?: ArtifactType
   stories?: Array<{ title: string; description?: string; points?: number }>
   agentTaskId?: string
+  deployUrl?: string
 }
 
 function slugify(text: string): string {
@@ -107,6 +108,19 @@ export async function POST(
           sha: ref.object.sha,
         })
 
+        // Commit sprint plan to the new branch if artifact content is available
+        if (body.artifactContent) {
+          const content = Buffer.from(body.artifactContent).toString('base64')
+          await octokit.rest.repos.createOrUpdateFileContents({
+            owner,
+            repo,
+            path: `sprints/sprint-${sprint.number}.md`,
+            message: `Add sprint ${sprint.number} plan`,
+            content,
+            branch: branchName,
+          })
+        }
+
         // Update sprint with feature branch
         await db
           .update(sprints)
@@ -183,6 +197,54 @@ export async function POST(
       case 'review': {
         nextStatus = 'qa'
         assertValidTransition(currentStatus, nextStatus, 'approve-stage')
+
+        // Validate PR has been approved or merged before allowing transition
+        if (sprint.prUrl) {
+          const [account] = await db
+            .select()
+            .from(accounts)
+            .where(
+              and(
+                eq(accounts.userId, session.user.id),
+                eq(accounts.provider, 'github')
+              )
+            )
+            .limit(1)
+
+          if (account?.access_token) {
+            const octokit = createOctokit(account.access_token)
+            const owner = project.githubOwner
+            const repo = project.githubRepo
+
+            // Extract PR number from URL
+            const prNumber = parseInt(sprint.prUrl.split('/').pop() ?? '0', 10)
+            if (prNumber > 0) {
+              // Check if PR is merged
+              const { data: pr } = await octokit.rest.pulls.get({
+                owner,
+                repo,
+                pull_number: prNumber,
+              })
+
+              if (!pr.merged) {
+                // Check for an approved review
+                const { data: reviews } = await octokit.rest.pulls.listReviews({
+                  owner,
+                  repo,
+                  pull_number: prNumber,
+                })
+                const hasApproval = reviews.some((r) => r.state === 'APPROVED')
+                if (!hasApproval) {
+                  return NextResponse.json(
+                    { error: 'PR needs at least one approved review before moving to QA' },
+                    { status: 400 }
+                  )
+                }
+              }
+            }
+          }
+        }
+
         break
       }
 
@@ -195,6 +257,37 @@ export async function POST(
       case 'deploying': {
         nextStatus = 'complete'
         assertValidTransition(currentStatus, nextStatus, 'approve-stage')
+
+        // Create deploy-record artifact
+        if (body.agentTaskId) {
+          const deployContent = [
+            `# Sprint ${sprint.number} Deployment`,
+            '',
+            `- **Date**: ${new Date().toISOString()}`,
+            `- **Sprint**: ${sprint.number}`,
+            `- **Feature Branch**: ${sprint.featureBranch ?? 'N/A'}`,
+            `- **PR URL**: ${sprint.prUrl ?? 'N/A'}`,
+            body.deployUrl ? `- **Deploy URL**: ${body.deployUrl}` : '',
+          ].filter(Boolean).join('\n')
+
+          await db.insert(artifacts).values({
+            projectId: project.id,
+            agentTaskId: body.agentTaskId,
+            sprintId,
+            type: 'deploy-record',
+            contentMd: body.artifactContent ?? deployContent,
+            status: 'current',
+          })
+        }
+
+        // Store deploy URL if provided
+        if (body.deployUrl) {
+          await db
+            .update(sprints)
+            .set({ deployUrl: body.deployUrl })
+            .where(eq(sprints.id, sprintId))
+        }
+
         break
       }
 

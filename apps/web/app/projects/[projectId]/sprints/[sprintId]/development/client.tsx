@@ -88,6 +88,15 @@ export function DevelopmentClient({
 
   return (
     <div className="flex flex-col h-full p-4 gap-4">
+      {/* Max intro message */}
+      <div className="bg-slate-900 border border-slate-800 rounded-lg p-3 flex items-start gap-3">
+        <span className="w-2 h-2 rounded-full bg-emerald-400 mt-1.5 shrink-0" />
+        <p className="text-sm text-slate-300 font-mono">
+          <span className="text-emerald-400 font-semibold">Max:</span>{' '}
+          Branch <code className="text-blue-400">{featureBranch ?? `sprint-${sprintNumber}`}</code> is ready. Viktor, you&apos;re up.
+        </p>
+      </div>
+
       {/* Kanban strip */}
       <div className="h-48 border-b border-slate-800 pb-4">
         <h2 className="text-sm font-semibold text-slate-400 mb-3">

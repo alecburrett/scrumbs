@@ -7,9 +7,11 @@ interface PlanningClientProps {
   sprintId: string
   sprintNumber: number
   prdContent?: string
+  priorRetro?: string
+  carryForwardStories?: Array<{ title: string; description: string | null }>
 }
 
-export function PlanningClient({ projectId, sprintId, sprintNumber, prdContent }: PlanningClientProps) {
+export function PlanningClient({ projectId, sprintId, sprintNumber, prdContent, priorRetro, carryForwardStories }: PlanningClientProps) {
   return (
     <StageWorkspace
       projectId={projectId}
@@ -22,6 +24,8 @@ export function PlanningClient({ projectId, sprintId, sprintNumber, prdContent }
         sprintId,
         sprintNumber,
         ...(prdContent ? { prdContent } : {}),
+        ...(priorRetro ? { priorRetro } : {}),
+        ...(carryForwardStories ? { carryForwardStories } : {}),
       }}
       artifactTitle={`Sprint ${sprintNumber} Plan`}
     />
