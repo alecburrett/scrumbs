@@ -87,10 +87,44 @@ export function StageWorkspace({
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' })
   }, [messages])
 
+  /** Fetch task output directly from DB as a fallback when SSE misses events */
+  const fetchTaskOutput = useCallback(async (tid: string) => {
+    try {
+      const params = new URLSearchParams()
+      if (sprintId) params.set('sprintId', sprintId)
+      if (personaName) params.set('personaName', personaName)
+      const res = await fetch(`/api/projects/${projectId}/active-task?${params.toString()}`)
+      // If no active task, the task likely completed — check DB for output
+      if (res.status === 404) {
+        // Task completed before we could connect. Poll for the result.
+        const taskRes = await fetch(`/api/projects/${projectId}/tasks/${tid}`)
+        if (taskRes.ok) {
+          const task = await taskRes.json()
+          if (task.status === 'completed' && task.outputText) {
+            setMessages((prev) => {
+              // Don't duplicate if we already have assistant messages
+              if (prev.some((m) => m.role === 'assistant')) return prev
+              return [...prev, { role: 'assistant', content: task.outputText }]
+            })
+            if (task.outputText.length > 200) {
+              setArtifact(task.outputText)
+            }
+            setStatus('done')
+            return true
+          }
+        }
+      }
+    } catch {
+      // ignore — SSE is the primary mechanism
+    }
+    return false
+  }, [projectId, sprintId, personaName])
+
   // Connect to an existing SSE stream for a given task
   const connectToStream = useCallback((tid: string, sid: string) => {
     setTaskId(tid)
     setStatus('connecting')
+    let receivedEvents = false
 
     fetch('/api/config')
       .then((res) => {
@@ -101,9 +135,18 @@ export function StageWorkspace({
         const url = `${agentServiceUrl}/tasks/${tid}/stream?sessionId=${sid}${agentServiceSecret ? `&secret=${encodeURIComponent(agentServiceSecret)}` : ''}`
         const es = new EventSource(url)
 
+        // Fallback: if no events received within 5s, poll the DB
+        const fallbackTimer = setTimeout(async () => {
+          if (!receivedEvents) {
+            const found = await fetchTaskOutput(tid)
+            if (found) es.close()
+          }
+        }, 5000)
+
         es.onopen = () => setStatus('connected')
 
         es.onmessage = (e) => {
+          receivedEvents = true
           try {
             const event = JSON.parse(e.data) as SSEEvent
             if (event.type === 'message') {
@@ -125,6 +168,7 @@ export function StageWorkspace({
               setPendingApproval(true)
             }
             if (event.type === 'done') {
+              clearTimeout(fallbackTimer)
               setStatus('done')
               es.close()
             }
@@ -148,14 +192,20 @@ export function StageWorkspace({
         }
 
         es.onerror = () => {
-          setStatus((prev) => (prev === 'done' ? 'done' : 'error'))
+          clearTimeout(fallbackTimer)
+          // On error, try DB fallback before giving up
+          fetchTaskOutput(tid).then((found) => {
+            if (!found) {
+              setStatus((prev) => (prev === 'done' ? 'done' : 'error'))
+            }
+          })
           es.close()
         }
       })
       .catch(() => {
         setStatus('error')
       })
-  }, [])
+  }, [fetchTaskOutput])
 
   // Auto-reconnect: check for an existing running task on mount
   useEffect(() => {
