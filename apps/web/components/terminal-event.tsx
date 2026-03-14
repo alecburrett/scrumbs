@@ -11,8 +11,8 @@ export function TerminalEventRow({ event }: TerminalEventProps) {
     case 'tool_call':
       return (
         <div className="flex gap-2">
-          <span className="text-cyan-400 font-mono">[tool]</span>
-          <span className="text-cyan-300 font-mono">{String(payload?.name ?? '')}</span>
+          <span className="text-cyan-400 font-mono">▶ tool_call</span>
+          <span className="text-cyan-300 font-mono">{String(payload?.toolName ?? payload?.name ?? '')}</span>
           <span className="text-slate-500 font-mono text-xs truncate">
             {payload?.input ? JSON.stringify(payload.input) : ''}
           </span>
@@ -29,7 +29,7 @@ export function TerminalEventRow({ event }: TerminalEventProps) {
     case 'file_write':
       return (
         <div className="flex gap-2">
-          <span className="text-green-400 font-mono">[write]</span>
+          <span className="text-green-400 font-mono">▶ file_write</span>
           <span className="text-green-300 font-mono">{String(payload?.path ?? '')}</span>
         </div>
       )
@@ -53,7 +53,7 @@ export function TerminalEventRow({ event }: TerminalEventProps) {
     case 'git_op':
       return (
         <div className="flex gap-2">
-          <span className="text-blue-400 font-mono">[git]</span>
+          <span className="text-blue-400 font-mono">▶ git_op</span>
           <span className="text-blue-300 font-mono text-sm">{String(payload?.message ?? payload)}</span>
         </div>
       )

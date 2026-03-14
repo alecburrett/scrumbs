@@ -28,7 +28,12 @@ export async function POST(
     )
   }
 
-  const body = (await req.json().catch(() => ({}))) as RetroBody
+  let body: RetroBody
+  try {
+    body = await req.json()
+  } catch {
+    body = {}
+  }
 
   // Commit retro content to GitHub if available
   if (body.retroContent && currentSprint.featureBranch) {
