@@ -3,7 +3,7 @@ import type { Db } from '@scrumbs/db'
 import { agentTasks } from '@scrumbs/db'
 import { eq } from 'drizzle-orm'
 import type { SSEEvent, PersonaName } from '@scrumbs/types'
-import { SSEEmitter } from './sse.js'
+import { SSEEmitter, bufferEvent } from './sse.js'
 import { executeToolCalls } from './tool-executor.js'
 import { getAllTools } from './tools/index.js'
 import type { ToolContext } from './tools/index.js'
@@ -103,14 +103,18 @@ export async function runAgentTask(
   const sessionId = task.sessionId ?? taskId
 
   const emit = (event: Omit<SSEEvent, 'taskId' | 'sessionId' | 'timestamp'>): void => {
+    const full: SSEEvent = {
+      ...event,
+      taskId,
+      sessionId,
+      timestamp: new Date().toISOString(),
+    }
     const emitter = getEmitter(taskId)
     if (emitter) {
-      emitter.emit({
-        ...event,
-        taskId,
-        sessionId,
-        timestamp: new Date().toISOString(),
-      })
+      emitter.emit(full)
+    } else {
+      // Buffer for when the browser connects and replays
+      bufferEvent(sessionId, full)
     }
   }
 
