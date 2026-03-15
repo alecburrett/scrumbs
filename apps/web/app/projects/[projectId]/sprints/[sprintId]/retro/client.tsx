@@ -25,7 +25,7 @@ export function RetroClient({
   const [starting, setStarting] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
-  const handleApprove = useCallback(async (artifact: string | null) => {
+  const handleApprove = useCallback((artifact: string | null, _taskId: string | null) => {
     setRetroArtifact(artifact)
     setRetroDone(true)
   }, [])
