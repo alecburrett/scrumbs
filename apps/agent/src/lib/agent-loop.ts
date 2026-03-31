@@ -23,7 +23,7 @@ import {
 } from '@scrumbs/personas'
 
 const SSE_BUFFER_CLEANUP_DELAY_MS = 30_000
-const MODEL = process.env.ANTHROPIC_MODEL ?? 'claude-sonnet-4-20250514'
+const MODEL = process.env.ANTHROPIC_MODEL ?? 'claude-sonnet-4-6'
 const MAX_TURNS = 50
 
 // In-memory map of active emitters (populated by the SSE route)
@@ -150,7 +150,7 @@ export async function runAgentTask(
     if (!process.env.ANTHROPIC_API_KEY) {
       throw new Error('ANTHROPIC_API_KEY environment variable is required')
     }
-    const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY })
+    const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY, timeout: 120_000 })
 
     // Build tool definitions for the API
     const tools: Anthropic.Tool[] = needsTools

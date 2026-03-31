@@ -6,19 +6,17 @@ import { TerminalEventRow } from './terminal-event'
 import { ApprovalGateBanner } from './approval-gate-banner'
 
 interface TerminalPanelProps {
+  projectId: string
   taskId: string
   sessionId: string
-  agentServiceUrl: string
-  agentServiceSecret?: string
   onStoryStatus?: (storyId: string, status: string) => void
   onDone?: () => void
 }
 
 export function TerminalPanel({
+  projectId,
   taskId,
   sessionId,
-  agentServiceUrl,
-  agentServiceSecret,
   onStoryStatus,
   onDone,
 }: TerminalPanelProps) {
@@ -32,7 +30,8 @@ export function TerminalPanel({
   useEffect(() => { onDoneRef.current = onDone })
 
   useEffect(() => {
-    const url = `${agentServiceUrl}/tasks/${taskId}/stream?sessionId=${sessionId}${agentServiceSecret ? `&secret=${encodeURIComponent(agentServiceSecret)}` : ''}`
+    // Use the server-side proxy — secret is added server-side and never sent to the browser
+    const url = `/api/projects/${projectId}/tasks/${taskId}/stream?sessionId=${sessionId}`
     const es = new EventSource(url)
 
     es.onopen = () => setConnected(true)
@@ -59,7 +58,7 @@ export function TerminalPanel({
     es.onerror = () => setConnected(false)
 
     return () => es.close()
-  }, [taskId, sessionId, agentServiceUrl])
+  }, [projectId, taskId, sessionId])
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' })

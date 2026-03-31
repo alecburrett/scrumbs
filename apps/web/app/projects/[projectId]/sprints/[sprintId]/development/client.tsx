@@ -1,6 +1,6 @@
 'use client'
 
-import { useCallback, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import type { StoryStatus } from '@scrumbs/types'
 import { KanbanStrip } from '@/components/kanban-strip'
@@ -29,12 +29,31 @@ export function DevelopmentClient({
   const router = useRouter()
   const [taskId, setTaskId] = useState<string | null>(null)
   const [sessionId, setSessionId] = useState<string | null>(null)
-  const [agentServiceUrl, setAgentServiceUrl] = useState<string | null>(null)
-  const [agentServiceSecret, setAgentServiceSecret] = useState<string | null>(null)
   const [starting, setStarting] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [isDone, setIsDone] = useState(false)
   const [completing, setCompleting] = useState(false)
+
+  // Reconnect to an active Viktor task on mount (e.g. after a page reload)
+  useEffect(() => {
+    let cancelled = false
+    async function checkActiveTask() {
+      try {
+        const params = new URLSearchParams({ sprintId, personaName: 'viktor' })
+        const res = await fetch(`/api/projects/${projectId}/active-task?${params.toString()}`)
+        if (!res.ok || cancelled) return
+        const { taskId: tid, sessionId: sid } = await res.json()
+        if (!cancelled && tid && sid) {
+          setTaskId(tid)
+          setSessionId(sid)
+        }
+      } catch {
+        // No active task — stay on start screen
+      }
+    }
+    checkActiveTask()
+    return () => { cancelled = true }
+  }, [projectId, sprintId])
 
   const handleStoryStatus = useCallback((storyId: string, status: string) => {
     fetch(`/api/sprints/${sprintId}/stories/${storyId}`, {
@@ -49,12 +68,6 @@ export function DevelopmentClient({
     setError(null)
 
     try {
-      const configRes = await fetch('/api/config')
-      if (!configRes.ok) throw new Error('Failed to load config')
-      const config = await configRes.json()
-      setAgentServiceUrl(config.agentServiceUrl)
-      setAgentServiceSecret(config.agentServiceSecret ?? null)
-
       const taskRes = await fetch(`/api/projects/${projectId}/tasks`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -139,14 +152,13 @@ export function DevelopmentClient({
 
       {/* Terminal panel or start button */}
       <div className="flex-1">
-        {taskId && sessionId && agentServiceUrl ? (
+        {taskId && sessionId ? (
           <div className="flex flex-col h-full">
             <div className="flex-1 min-h-0">
               <TerminalPanel
+                projectId={projectId}
                 taskId={taskId}
                 sessionId={sessionId}
-                agentServiceUrl={agentServiceUrl}
-                agentServiceSecret={agentServiceSecret ?? undefined}
                 onStoryStatus={handleStoryStatus}
                 onDone={handleDone}
               />

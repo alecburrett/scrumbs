@@ -1,13 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { auth } from '@/auth'
 import { db } from '@/lib/db'
-import { sprints, stories, projects, accounts } from '@scrumbs/db'
+import { sprints, stories, projects, accounts, artifacts, agentTasks } from '@scrumbs/db'
 import { eq, and, inArray } from 'drizzle-orm'
 import { getSprintIfOwned } from '@/lib/ownership'
 import { createOctokit } from '@/lib/github'
 
 interface RetroBody {
   retroContent?: string
+  agentTaskId?: string
 }
 
 export async function POST(
@@ -33,6 +34,40 @@ export async function POST(
     body = await req.json()
   } catch {
     body = {}
+  }
+
+  // Persist retro artifact to DB so Sprint N+1 planning can load it as priorRetro
+  if (body.retroContent && body.agentTaskId) {
+    try {
+      const [task] = await db
+        .select({ id: agentTasks.id })
+        .from(agentTasks)
+        .where(and(eq(agentTasks.id, body.agentTaskId), eq(agentTasks.projectId, currentSprint.projectId)))
+        .limit(1)
+
+      if (task) {
+        await db
+          .update(artifacts)
+          .set({ status: 'superseded' })
+          .where(and(
+            eq(artifacts.projectId, currentSprint.projectId),
+            eq(artifacts.type, 'retro'),
+            eq(artifacts.status, 'current'),
+          ))
+
+        await db.insert(artifacts).values({
+          projectId: currentSprint.projectId,
+          sprintId,
+          agentTaskId: body.agentTaskId,
+          type: 'retro',
+          contentMd: body.retroContent,
+          status: 'current',
+        })
+      }
+    } catch {
+      // Non-blocking: log but don't fail the retro
+      console.error('Failed to persist retro artifact to DB')
+    }
   }
 
   // Commit retro content to GitHub if available
