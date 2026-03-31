@@ -14,16 +14,21 @@ export function PrdClient({ projectId, existingRequirements }: PrdClientProps) {
 
   const handleApprove = useCallback(async (artifact: string | null, taskId: string | null) => {
     // 1. Store PRD artifact
-    if (artifact) {
-      await fetch(`/api/projects/${projectId}/artifacts`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          type: 'prd',
-          contentMd: artifact,
-          agentTaskId: taskId,
-        }),
-      })
+    if (!artifact || !taskId) {
+      throw new Error('A PRD must be generated before approving.')
+    }
+    const artifactRes = await fetch(`/api/projects/${projectId}/artifacts`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        type: 'prd',
+        contentMd: artifact,
+        agentTaskId: taskId,
+      }),
+    })
+    if (!artifactRes.ok) {
+      const data = await artifactRes.json().catch(() => ({}))
+      throw new Error(data.error ?? 'Failed to save PRD')
     }
 
     // 2. Create Sprint 1

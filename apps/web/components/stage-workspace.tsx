@@ -126,14 +126,10 @@ export function StageWorkspace({
     setStatus('connecting')
     let receivedEvents = false
 
-    fetch('/api/config')
-      .then((res) => {
-        if (!res.ok) throw new Error('Failed to load config')
-        return res.json()
-      })
-      .then(({ agentServiceUrl, agentServiceSecret }) => {
-        const url = `${agentServiceUrl}/tasks/${tid}/stream?sessionId=${sid}${agentServiceSecret ? `&secret=${encodeURIComponent(agentServiceSecret)}` : ''}`
-        const es = new EventSource(url)
+    // Use the server-side proxy — secret is added server-side and never sent to the browser
+    Promise.resolve().then(() => {
+      const url = `/api/projects/${projectId}/tasks/${tid}/stream?sessionId=${sid}`
+      const es = new EventSource(url)
 
         // Fallback: if no events received within 5s, poll the DB
         const fallbackTimer = setTimeout(async () => {
@@ -202,10 +198,11 @@ export function StageWorkspace({
           es.close()
         }
       })
-      .catch(() => {
+      .catch((err) => {
+        console.error('Failed to connect to stream:', err)
         setStatus('error')
       })
-  }, [fetchTaskOutput])
+  }, [fetchTaskOutput, projectId])
 
   // Auto-reconnect: check for an existing running task on mount
   useEffect(() => {

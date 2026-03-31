@@ -24,8 +24,8 @@ export async function POST(
   const body = await req.json()
   const { type, contentMd, agentTaskId } = body
 
-  if (!type || !contentMd) {
-    return NextResponse.json({ error: 'type and contentMd are required' }, { status: 400 })
+  if (!type || !contentMd || !agentTaskId) {
+    return NextResponse.json({ error: 'type, contentMd, and agentTaskId are required' }, { status: 400 })
   }
 
   const validTypes = ['requirements', 'prd'] as const
@@ -33,16 +33,14 @@ export async function POST(
     return NextResponse.json({ error: `type must be one of: ${validTypes.join(', ')}` }, { status: 400 })
   }
 
-  // If agentTaskId provided, verify it belongs to this project
-  if (agentTaskId) {
-    const [task] = await db
-      .select({ id: agentTasks.id })
-      .from(agentTasks)
-      .where(and(eq(agentTasks.id, agentTaskId), eq(agentTasks.projectId, projectId)))
-      .limit(1)
-    if (!task) {
-      return NextResponse.json({ error: 'Agent task not found for this project' }, { status: 400 })
-    }
+  // Verify agentTaskId belongs to this project
+  const [task] = await db
+    .select({ id: agentTasks.id })
+    .from(agentTasks)
+    .where(and(eq(agentTasks.id, agentTaskId), eq(agentTasks.projectId, projectId)))
+    .limit(1)
+  if (!task) {
+    return NextResponse.json({ error: 'Agent task not found for this project' }, { status: 400 })
   }
 
   // Mark any existing current artifact of this type as superseded
@@ -62,7 +60,7 @@ export async function POST(
     .insert(artifacts)
     .values({
       projectId,
-      agentTaskId: agentTaskId ?? projectId, // fallback if no task
+      agentTaskId,
       type,
       contentMd,
       status: 'current',

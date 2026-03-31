@@ -1,19 +1,39 @@
 import type { ServerResponse } from 'node:http'
 import type { SSEEvent } from '@scrumbs/types'
 
+const MAX_BUFFER_SIZE = 200
+const BUFFER_TTL_MS = 30 * 60 * 1000 // 30 minutes
+
 const buffers = new Map<string, SSEEvent[]>()
+const bufferTimestamps = new Map<string, number>()
+
+function pruneExpiredBuffers(): void {
+  const now = Date.now()
+  for (const [sessionId, ts] of bufferTimestamps) {
+    if (now - ts > BUFFER_TTL_MS) {
+      buffers.delete(sessionId)
+      bufferTimestamps.delete(sessionId)
+    }
+  }
+}
 
 /**
  * Buffer an event for a session even if no SSE connection exists yet.
- * This ensures events emitted before the browser connects are not lost.
+ * Capped at MAX_BUFFER_SIZE events per session; sessions expire after 30 minutes.
  */
 export function bufferEvent(sessionId: string, event: SSEEvent): void {
+  pruneExpiredBuffers()
+
   let buf = buffers.get(sessionId)
   if (!buf) {
     buf = []
     buffers.set(sessionId, buf)
   }
-  buf.push(event)
+  bufferTimestamps.set(sessionId, Date.now())
+
+  if (buf.length < MAX_BUFFER_SIZE) {
+    buf.push(event)
+  }
 }
 
 export class SSEEmitter {
@@ -38,5 +58,6 @@ export class SSEEmitter {
 
   static clearBuffer(sessionId: string): void {
     buffers.delete(sessionId)
+    bufferTimestamps.delete(sessionId)
   }
 }

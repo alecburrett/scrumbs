@@ -22,11 +22,13 @@ export function RetroClient({
   const router = useRouter()
   const [retroDone, setRetroDone] = useState(false)
   const [retroArtifact, setRetroArtifact] = useState<string | null>(null)
+  const [retroTaskId, setRetroTaskId] = useState<string | null>(null)
   const [starting, setStarting] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
-  const handleApprove = useCallback((artifact: string | null, _taskId: string | null) => {
+  const handleApprove = useCallback(async (artifact: string | null, taskId: string | null) => {
     setRetroArtifact(artifact)
+    setRetroTaskId(taskId)
     setRetroDone(true)
   }, [])
 
@@ -39,6 +41,7 @@ export function RetroClient({
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           retroContent: retroArtifact,
+          agentTaskId: retroTaskId,
         }),
       })
       if (!res.ok) {
@@ -52,7 +55,7 @@ export function RetroClient({
     } finally {
       setStarting(false)
     }
-  }, [sprintId, retroArtifact, projectId, router])
+  }, [sprintId, retroArtifact, retroTaskId, projectId, router])
 
   if (sprintStatus !== 'complete') {
     return (
