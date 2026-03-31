@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { auth } from '@/auth'
 import { db } from '@/lib/db'
-import { projects } from '@scrumbs/db'
+import { projects, agentTasks } from '@scrumbs/db'
 import { and, eq } from 'drizzle-orm'
 
 /**
@@ -27,6 +27,14 @@ export async function GET(
     .limit(1)
   if (!project) return new NextResponse('Not found', { status: 404 })
 
+  // Verify the task belongs to this project (prevents cross-project stream access)
+  const [task] = await db
+    .select({ id: agentTasks.id })
+    .from(agentTasks)
+    .where(and(eq(agentTasks.id, taskId), eq(agentTasks.projectId, projectId)))
+    .limit(1)
+  if (!task) return new NextResponse('Not found', { status: 404 })
+
   const agentServiceUrl = process.env.AGENT_SERVICE_URL
   const agentServiceSecret = process.env.AGENT_SERVICE_SECRET
   if (!agentServiceUrl) return new NextResponse('Agent service not configured', { status: 503 })
@@ -37,6 +45,7 @@ export async function GET(
 
   const upstream = await fetch(upstreamUrl.toString(), {
     headers: { Accept: 'text/event-stream' },
+    cache: 'no-store',
   })
 
   if (!upstream.ok || !upstream.body) {

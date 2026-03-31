@@ -8,6 +8,7 @@ const buffers = new Map<string, SSEEvent[]>()
 const bufferTimestamps = new Map<string, number>()
 
 function pruneExpiredBuffers(): void {
+  if (Math.random() > 0.02) return // Only prune on ~2% of calls to reduce overhead
   const now = Date.now()
   for (const [sessionId, ts] of bufferTimestamps) {
     if (now - ts > BUFFER_TTL_MS) {
@@ -31,9 +32,11 @@ export function bufferEvent(sessionId: string, event: SSEEvent): void {
   }
   bufferTimestamps.set(sessionId, Date.now())
 
-  if (buf.length < MAX_BUFFER_SIZE) {
-    buf.push(event)
+  // Evict the oldest event to make room so the newest events (including done/error) are always replayable
+  if (buf.length >= MAX_BUFFER_SIZE) {
+    buf.shift()
   }
+  buf.push(event)
 }
 
 export class SSEEmitter {

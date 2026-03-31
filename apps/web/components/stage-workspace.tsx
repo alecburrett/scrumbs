@@ -72,6 +72,8 @@ export function StageWorkspace({
   const bottomRef = useRef<HTMLDivElement>(null)
   // Accumulate conversation history across tasks for multi-turn
   const conversationHistoryRef = useRef<ChatMessage[]>([])
+  // Hold reference to the active EventSource so it can be closed on reconnect / unmount
+  const esRef = useRef<EventSource | null>(null)
 
   const colour = PERSONA_COLOURS[personaName]
   const displayName = PERSONA_DISPLAY_NAMES[personaName]
@@ -86,6 +88,11 @@ export function StageWorkspace({
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' })
   }, [messages])
+
+  // Close the EventSource when the component unmounts
+  useEffect(() => {
+    return () => { esRef.current?.close() }
+  }, [])
 
   /** Fetch task output directly from DB as a fallback when SSE misses events */
   const fetchTaskOutput = useCallback(async (tid: string) => {
@@ -122,86 +129,85 @@ export function StageWorkspace({
 
   // Connect to an existing SSE stream for a given task
   const connectToStream = useCallback((tid: string, sid: string) => {
+    // Close any existing connection before opening a new one
+    esRef.current?.close()
+    esRef.current = null
+
     setTaskId(tid)
     setStatus('connecting')
     let receivedEvents = false
 
     // Use the server-side proxy — secret is added server-side and never sent to the browser
-    Promise.resolve().then(() => {
-      const url = `/api/projects/${projectId}/tasks/${tid}/stream?sessionId=${sid}`
-      const es = new EventSource(url)
+    const url = `/api/projects/${projectId}/tasks/${tid}/stream?sessionId=${sid}`
+    const es = new EventSource(url)
+    esRef.current = es
 
-        // Fallback: if no events received within 5s, poll the DB
-        const fallbackTimer = setTimeout(async () => {
-          if (!receivedEvents) {
-            const found = await fetchTaskOutput(tid)
-            if (found) es.close()
-          }
-        }, 5000)
+    // Fallback: if no events received within 5s, poll the DB
+    const fallbackTimer = setTimeout(async () => {
+      if (!receivedEvents) {
+        const found = await fetchTaskOutput(tid)
+        if (found) es.close()
+      }
+    }, 5000)
 
-        es.onopen = () => setStatus('connected')
+    es.onopen = () => setStatus('connected')
 
-        es.onmessage = (e) => {
-          receivedEvents = true
-          try {
-            const event = JSON.parse(e.data) as SSEEvent
-            if (event.type === 'message') {
-              const payload = event.payload as { role?: string; content?: string }
-              if (payload.content) {
-                const msg: ChatMessage = { role: (payload.role as 'user' | 'assistant') ?? 'assistant', content: payload.content }
-                setMessages((prev) => [...prev, msg])
-                // Track assistant messages for conversation history
-                if (msg.role === 'assistant') {
-                  conversationHistoryRef.current.push(msg)
-                }
-                // Use longer responses as artifact content
-                if (payload.role !== 'user' && payload.content.length > 200) {
-                  setArtifact(payload.content)
-                }
-              }
+    es.onmessage = (e) => {
+      receivedEvents = true
+      try {
+        const event = JSON.parse(e.data) as SSEEvent
+        if (event.type === 'message') {
+          const payload = event.payload as { role?: string; content?: string }
+          if (payload.content) {
+            const msg: ChatMessage = { role: (payload.role as 'user' | 'assistant') ?? 'assistant', content: payload.content }
+            setMessages((prev) => [...prev, msg])
+            // Track assistant messages for conversation history
+            if (msg.role === 'assistant') {
+              conversationHistoryRef.current.push(msg)
             }
-            if (event.type === 'approval_required') {
-              setPendingApproval(true)
+            // Use longer responses as artifact content
+            if (payload.role !== 'user' && payload.content.length > 200) {
+              setArtifact(payload.content)
             }
-            if (event.type === 'done') {
-              clearTimeout(fallbackTimer)
-              setStatus('done')
-              es.close()
-            }
-            if (event.type === 'error') {
-              const payload = event.payload as { warning?: boolean; message?: string }
-              if (payload.warning) {
-                setBudgetWarning(payload.message ?? 'Token budget warning')
-              } else {
-                setError(payload.message ?? 'An error occurred')
-              }
-            }
-            if (event.type === 'context_summary') {
-              const payload = event.payload as { message?: string }
-              if (payload.message) {
-                setMessages((prev) => [...prev, { role: 'assistant', content: `_${payload.message}_` }])
-              }
-            }
-          } catch {
-            // ignore malformed events
           }
         }
-
-        es.onerror = () => {
+        if (event.type === 'approval_required') {
+          setPendingApproval(true)
+        }
+        if (event.type === 'done') {
           clearTimeout(fallbackTimer)
-          // On error, try DB fallback before giving up
-          fetchTaskOutput(tid).then((found) => {
-            if (!found) {
-              setStatus((prev) => (prev === 'done' ? 'done' : 'error'))
-            }
-          })
+          setStatus('done')
           es.close()
         }
+        if (event.type === 'error') {
+          const payload = event.payload as { warning?: boolean; message?: string }
+          if (payload.warning) {
+            setBudgetWarning(payload.message ?? 'Token budget warning')
+          } else {
+            setError(payload.message ?? 'An error occurred')
+          }
+        }
+        if (event.type === 'context_summary') {
+          const payload = event.payload as { message?: string }
+          if (payload.message) {
+            setMessages((prev) => [...prev, { role: 'assistant', content: `_${payload.message}_` }])
+          }
+        }
+      } catch {
+        // ignore malformed events
+      }
+    }
+
+    es.onerror = () => {
+      clearTimeout(fallbackTimer)
+      // On error, try DB fallback before giving up
+      fetchTaskOutput(tid).then((found) => {
+        if (!found) {
+          setStatus((prev) => (prev === 'done' ? 'done' : 'error'))
+        }
       })
-      .catch((err) => {
-        console.error('Failed to connect to stream:', err)
-        setStatus('error')
-      })
+      es.close()
+    }
   }, [fetchTaskOutput, projectId])
 
   // Auto-reconnect: check for an existing running task on mount
