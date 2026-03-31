@@ -1,7 +1,7 @@
 import { auth } from '@/auth'
 import { db } from '@/lib/db'
 import { artifacts } from '@scrumbs/db'
-import { eq, desc } from 'drizzle-orm'
+import { eq, and, desc } from 'drizzle-orm'
 import { DownloadButton } from './download-button'
 
 interface FilesPanelProps {
@@ -19,19 +19,16 @@ export async function FilesPanel({ projectId }: FilesPanelProps) {
   const session = await auth()
   if (!session?.user?.id) return null
 
-  const rows = await db
+  const current = await db
     .select({
       id: artifacts.id,
       type: artifacts.type,
-      status: artifacts.status,
       contentMd: artifacts.contentMd,
       createdAt: artifacts.createdAt,
     })
     .from(artifacts)
-    .where(eq(artifacts.projectId, projectId))
+    .where(and(eq(artifacts.projectId, projectId), eq(artifacts.status, 'current')))
     .orderBy(desc(artifacts.createdAt))
-
-  const current = rows.filter((r) => r.status === 'current')
 
   return (
     <aside className="w-44 border-l border-terminal-border flex flex-col shrink-0 bg-terminal-bg">

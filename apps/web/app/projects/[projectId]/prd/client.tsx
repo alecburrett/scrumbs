@@ -67,10 +67,19 @@ export function PrdClient({ projectId, projectName, existingRequirements }: PrdC
         projectName,
         ...(existingRequirements ? { existingRequirements } : {}),
         ...intakeValues,
+        rawRequirements: formatIntakeAsMessage(intakeValues),
       }}
       artifactTitle="PRD"
       onApprove={handleApprove}
       previousPersona="pablo"
     />
   )
+}
+
+function formatIntakeAsMessage(values: Record<string, string>): string {
+  const lines: string[] = []
+  if (values.priorityFeatures) lines.push(`Priority features: ${values.priorityFeatures}`)
+  if (values.outOfScope)        lines.push(`Out of scope: ${values.outOfScope}`)
+  if (values.successCriteria)   lines.push(`Success criteria: ${values.successCriteria}`)
+  return lines.join('\n')
 }

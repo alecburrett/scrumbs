@@ -205,7 +205,7 @@ export function StageWorkspace({
       const taskInput = {
         ...input,
         stage,
-        ...(userMessage ? { rawRequirements: userMessage, userMessage } : {}),
+        ...(userMessage ? { userMessage } : {}),
         ...(history.length > 0 ? { conversationHistory: history } : {}),
       }
       const taskRes = await fetch(`/api/projects/${projectId}/tasks`, {
