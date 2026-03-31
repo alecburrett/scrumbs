@@ -1,5 +1,7 @@
 'use client'
 
+import { useRouter } from 'next/navigation'
+import { useCallback } from 'react'
 import type { StoryStatus } from '@scrumbs/types'
 import { KanbanStrip } from '@/components/kanban-strip'
 import { StageWorkspace } from '@/components/stage-workspace'
@@ -17,6 +19,25 @@ interface QaClientProps {
 }
 
 export function QaClient({ projectId, sprintId, sprintNumber, featureBranch, stories }: QaClientProps) {
+  const router = useRouter()
+
+  const handleApprove = useCallback(async (artifact: string | null, taskId: string | null) => {
+    const res = await fetch(`/api/sprints/${sprintId}/approve-stage`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        artifactContent: artifact,
+        artifactType: 'test-report',
+        agentTaskId: taskId,
+      }),
+    })
+    if (!res.ok) {
+      const data = await res.json().catch(() => ({}))
+      throw new Error(data.error ?? 'Failed to approve QA')
+    }
+    router.push(`/projects/${projectId}/sprints/${sprintId}/deploy`)
+  }, [sprintId, projectId, router])
+
   return (
     <div className="flex flex-col h-full">
       {/* Kanban strip */}
@@ -42,6 +63,7 @@ export function QaClient({ projectId, sprintId, sprintNumber, featureBranch, sto
             featureBranch: featureBranch ?? `sprint-${sprintNumber}`,
           }}
           artifactTitle="QA Report"
+          onApprove={handleApprove}
           previousPersona="rex"
         />
       </div>

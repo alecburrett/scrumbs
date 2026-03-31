@@ -1,5 +1,7 @@
 'use client'
 
+import { useRouter } from 'next/navigation'
+import { useCallback } from 'react'
 import { StageWorkspace } from '@/components/stage-workspace'
 
 interface PrdClientProps {
@@ -8,6 +10,42 @@ interface PrdClientProps {
 }
 
 export function PrdClient({ projectId, existingRequirements }: PrdClientProps) {
+  const router = useRouter()
+
+  const handleApprove = useCallback(async (artifact: string | null, taskId: string | null) => {
+    // 1. Store PRD artifact
+    if (artifact) {
+      await fetch(`/api/projects/${projectId}/artifacts`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          type: 'prd',
+          contentMd: artifact,
+          agentTaskId: taskId,
+        }),
+      })
+    }
+
+    // 2. Create Sprint 1
+    const sprintRes = await fetch(`/api/projects/${projectId}/sprints`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+    })
+
+    if (!sprintRes.ok) {
+      const data = await sprintRes.json().catch(() => ({}))
+      // If a sprint already exists, use it
+      if (data.sprintId) {
+        router.push(`/projects/${projectId}/sprints/${data.sprintId}/planning`)
+        return
+      }
+      throw new Error(data.error ?? 'Failed to create sprint')
+    }
+
+    const sprint = await sprintRes.json()
+    router.push(`/projects/${projectId}/sprints/${sprint.id}/planning`)
+  }, [projectId, router])
+
   return (
     <StageWorkspace
       projectId={projectId}
@@ -19,6 +57,9 @@ export function PrdClient({ projectId, existingRequirements }: PrdClientProps) {
         ...(existingRequirements ? { existingRequirements } : {}),
       }}
       artifactTitle="PRD"
+      inputPlaceholder="Tell Pablo what you'd like in the PRD..."
+      onApprove={handleApprove}
+      previousPersona="pablo"
     />
   )
 }

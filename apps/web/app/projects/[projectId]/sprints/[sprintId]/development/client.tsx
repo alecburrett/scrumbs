@@ -1,6 +1,7 @@
 'use client'
 
 import { useCallback, useState } from 'react'
+import { useRouter } from 'next/navigation'
 import type { StoryStatus } from '@scrumbs/types'
 import { KanbanStrip } from '@/components/kanban-strip'
 import { TerminalPanel } from '@/components/terminal-panel'
@@ -25,14 +26,17 @@ export function DevelopmentClient({
   featureBranch,
   stories,
 }: DevelopmentClientProps) {
+  const router = useRouter()
   const [taskId, setTaskId] = useState<string | null>(null)
   const [sessionId, setSessionId] = useState<string | null>(null)
   const [agentServiceUrl, setAgentServiceUrl] = useState<string | null>(null)
+  const [agentServiceSecret, setAgentServiceSecret] = useState<string | null>(null)
   const [starting, setStarting] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [isDone, setIsDone] = useState(false)
+  const [completing, setCompleting] = useState(false)
 
   const handleStoryStatus = useCallback((storyId: string, status: string) => {
-    // Update story status via API
     fetch(`/api/sprints/${sprintId}/stories/${storyId}`, {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
@@ -49,6 +53,7 @@ export function DevelopmentClient({
       if (!configRes.ok) throw new Error('Failed to load config')
       const config = await configRes.json()
       setAgentServiceUrl(config.agentServiceUrl)
+      setAgentServiceSecret(config.agentServiceSecret ?? null)
 
       const taskRes = await fetch(`/api/projects/${projectId}/tasks`, {
         method: 'POST',
@@ -86,6 +91,33 @@ export function DevelopmentClient({
     }
   }, [projectId, sprintId, sprintNumber, featureBranch, stories])
 
+  const handleDone = useCallback(() => {
+    setIsDone(true)
+  }, [])
+
+  const handleCompleteDev = useCallback(async () => {
+    setCompleting(true)
+    setError(null)
+    try {
+      const res = await fetch(`/api/sprints/${sprintId}/approve-stage`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          agentTaskId: taskId,
+        }),
+      })
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}))
+        throw new Error(data.error ?? 'Failed to complete development')
+      }
+      router.push(`/projects/${projectId}/sprints/${sprintId}/review`)
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Unknown error')
+    } finally {
+      setCompleting(false)
+    }
+  }, [sprintId, taskId, projectId, router])
+
   return (
     <div className="flex flex-col h-full p-4 gap-4">
       {/* Max intro message */}
@@ -108,12 +140,29 @@ export function DevelopmentClient({
       {/* Terminal panel or start button */}
       <div className="flex-1">
         {taskId && sessionId && agentServiceUrl ? (
-          <TerminalPanel
-            taskId={taskId}
-            sessionId={sessionId}
-            agentServiceUrl={agentServiceUrl}
-            onStoryStatus={handleStoryStatus}
-          />
+          <div className="flex flex-col h-full">
+            <div className="flex-1 min-h-0">
+              <TerminalPanel
+                taskId={taskId}
+                sessionId={sessionId}
+                agentServiceUrl={agentServiceUrl}
+                agentServiceSecret={agentServiceSecret ?? undefined}
+                onStoryStatus={handleStoryStatus}
+                onDone={handleDone}
+              />
+            </div>
+            {isDone && (
+              <div className="pt-4">
+                <button
+                  onClick={handleCompleteDev}
+                  disabled={completing}
+                  className="w-full py-2 bg-green-600 text-white font-semibold rounded-lg hover:bg-green-700 disabled:opacity-50 transition-colors"
+                >
+                  {completing ? 'Completing...' : 'Complete Development & Create PR'}
+                </button>
+              </div>
+            )}
+          </div>
         ) : (
           <div className="flex flex-col items-center justify-center h-full bg-slate-950 rounded-lg border border-slate-800 p-8">
             <div className="flex items-center gap-2 mb-4">

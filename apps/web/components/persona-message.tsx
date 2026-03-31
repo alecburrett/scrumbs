@@ -5,7 +5,7 @@ import type { PersonaName } from '@scrumbs/types'
 import { ApproveButton } from './approve-button'
 
 interface PersonaMessageProps {
-  personaName: PersonaName
+  personaName?: PersonaName
   content: string
   requiresApproval?: boolean
   taskId?: string
@@ -17,6 +17,21 @@ export function PersonaMessage({
   requiresApproval,
   taskId,
 }: PersonaMessageProps) {
+  // User message (no persona)
+  if (!personaName) {
+    return (
+      <div className="space-y-1">
+        <div className="flex items-center gap-2">
+          <span className="w-2 h-2 rounded-full bg-slate-400" />
+          <span className="text-xs font-medium text-slate-400">You</span>
+        </div>
+        <div className="ml-4 p-3 bg-slate-700 rounded-lg text-sm text-slate-200 whitespace-pre-wrap">
+          {content}
+        </div>
+      </div>
+    )
+  }
+
   const colour = PERSONA_COLOURS[personaName]
   const displayName = PERSONA_DISPLAY_NAMES[personaName]
 
