@@ -4,9 +4,10 @@ export function NewProjectCta() {
   return (
     <Link
       href="/projects/new"
-      className="flex items-center justify-center w-full px-3 py-2 text-sm font-medium text-slate-300 border border-slate-700 rounded-lg hover:bg-slate-800 hover:text-white transition-colors"
+      className="flex items-center gap-1 w-full px-2 py-1.5 text-xs font-mono text-terminal-muted border border-terminal-border hover:border-terminal-accent hover:text-terminal-accent transition-colors"
     >
-      + New Project
+      <span>+</span>
+      <span>new project</span>
     </Link>
   )
 }

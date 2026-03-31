@@ -12,21 +12,27 @@ export default async function DashboardLayout({
   if (!session) redirect('/')
 
   return (
-    <div className="flex min-h-screen bg-slate-950 text-white">
+    <div className="flex min-h-screen bg-terminal-bg text-terminal-text">
       {/* Sidebar */}
-      <aside className="w-64 border-r border-slate-800 flex flex-col">
-        <div className="p-4 border-b border-slate-800">
-          <span className="text-lg font-bold">Scrumbs</span>
+      <aside className="w-48 border-r border-terminal-border flex flex-col shrink-0">
+        <div className="px-4 py-3 border-b border-terminal-border">
+          <span className="text-xs tracking-widest uppercase text-terminal-accent font-mono font-bold">
+            scrumbs
+          </span>
         </div>
-        <nav className="flex-1 p-4 space-y-1 overflow-y-auto">
+        <nav className="flex-1 py-3 overflow-y-auto">
+          <div className="px-4 mb-2">
+            <span className="terminal-label">projects</span>
+          </div>
           <ProjectList />
         </nav>
-        <div className="p-4 border-t border-slate-800">
+        <div className="p-3 border-t border-terminal-border">
           <NewProjectCta />
         </div>
       </aside>
+
       {/* Main */}
-      <main className="flex-1 overflow-y-auto">{children}</main>
+      <main className="flex-1 overflow-hidden flex flex-col">{children}</main>
     </div>
   )
 }

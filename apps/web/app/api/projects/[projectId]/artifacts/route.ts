@@ -2,7 +2,39 @@ import { NextRequest, NextResponse } from 'next/server'
 import { auth } from '@/auth'
 import { db } from '@/lib/db'
 import { projects, artifacts, agentTasks } from '@scrumbs/db'
-import { eq, and } from 'drizzle-orm'
+import { eq, and, desc } from 'drizzle-orm'
+
+export async function GET(
+  _req: NextRequest,
+  { params }: { params: Promise<{ projectId: string }> }
+) {
+  const session = await auth()
+  if (!session?.user?.id) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+
+  const { projectId } = await params
+
+  const [project] = await db
+    .select({ id: projects.id })
+    .from(projects)
+    .where(and(eq(projects.id, projectId), eq(projects.userId, session.user.id)))
+    .limit(1)
+  if (!project) return NextResponse.json({ error: 'Not found' }, { status: 404 })
+
+  const rows = await db
+    .select({
+      id: artifacts.id,
+      type: artifacts.type,
+      status: artifacts.status,
+      contentMd: artifacts.contentMd,
+      createdAt: artifacts.createdAt,
+      sprintId: artifacts.sprintId,
+    })
+    .from(artifacts)
+    .where(eq(artifacts.projectId, projectId))
+    .orderBy(desc(artifacts.createdAt))
+
+  return NextResponse.json(rows)
+}
 
 export async function POST(
   req: NextRequest,

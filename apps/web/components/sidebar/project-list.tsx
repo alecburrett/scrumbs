@@ -15,19 +15,20 @@ export async function ProjectList() {
 
   if (userProjects.length === 0) {
     return (
-      <p className="text-slate-500 text-sm px-2">No projects yet</p>
+      <p className="terminal-label px-4 py-2">no projects</p>
     )
   }
 
   return (
-    <ul className="space-y-1">
+    <ul>
       {userProjects.map((project) => (
         <li key={project.id}>
           <Link
             href={`/projects/${project.id}`}
-            className="flex items-center px-2 py-2 rounded-md text-slate-300 hover:bg-slate-800 hover:text-white transition-colors text-sm"
+            className="flex items-center px-4 py-1.5 text-xs font-mono text-terminal-muted hover:text-terminal-accent hover:bg-terminal-surface transition-colors"
           >
-            {project.name}
+            <span className="text-terminal-dim mr-2">/</span>
+            {project.name.toLowerCase()}
           </Link>
         </li>
       ))}

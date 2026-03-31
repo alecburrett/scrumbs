@@ -23,31 +23,29 @@ export function HandoffCard({ from, to, onComplete }: HandoffCardProps) {
 
   if (!visible) return null
 
+  const fromName = PERSONA_DISPLAY_NAMES[from].toLowerCase()
+  const toName = PERSONA_DISPLAY_NAMES[to].toLowerCase()
+
   return (
-    <div className="fixed inset-0 bg-slate-950/80 flex items-center justify-center z-50">
-      <div className="bg-slate-900 border border-slate-700 rounded-xl p-8 text-center space-y-4 animate-fade-in">
+    <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 font-mono">
+      <div className="bg-terminal-surface border border-terminal-border p-8 text-center space-y-4 min-w-[320px]">
+        <div className="text-xs text-terminal-dim tracking-widest uppercase mb-6">handoff</div>
         <div className="flex items-center justify-center gap-6">
-          <div className="text-center">
-            <span
-              className="block w-12 h-12 rounded-full mx-auto mb-2"
-              style={{ backgroundColor: PERSONA_COLOURS[from] }}
-            />
-            <span className="text-sm text-slate-400">{PERSONA_DISPLAY_NAMES[from]}</span>
+          <div className="text-center space-y-2">
+            <div className="w-2 h-2 bg-terminal-muted mx-auto" />
+            <span className="text-xs text-terminal-muted">{fromName}</span>
           </div>
-          <span className="text-2xl text-slate-500">→</span>
-          <div className="text-center">
-            <span
-              className="block w-12 h-12 rounded-full mx-auto mb-2"
-              style={{ backgroundColor: PERSONA_COLOURS[to] }}
-            />
-            <span className="text-sm text-slate-300 font-medium">{PERSONA_DISPLAY_NAMES[to]}</span>
+          <span className="text-terminal-dim text-sm">──→</span>
+          <div className="text-center space-y-2">
+            <div className="w-2 h-2 bg-terminal-accent mx-auto animate-pulse" />
+            <span className="text-xs text-terminal-accent">{toName}</span>
           </div>
         </div>
         <button
           onClick={() => { setVisible(false); onComplete() }}
-          className="text-xs text-slate-500 hover:text-slate-300"
+          className="text-xs text-terminal-dim hover:text-terminal-muted transition-colors mt-4"
         >
-          Skip
+          [skip]
         </button>
       </div>
     </div>
