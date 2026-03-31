@@ -4,6 +4,7 @@ import { projects } from '@scrumbs/db'
 import { eq, and } from 'drizzle-orm'
 import { notFound, redirect } from 'next/navigation'
 import { StageProgressBar } from '@/components/stage-progress-bar'
+import { FilesPanel } from '@/components/files-panel'
 
 export default async function ProjectLayout({
   children,
@@ -25,13 +26,20 @@ export default async function ProjectLayout({
 
   return (
     <div className="flex flex-col h-full">
-      <header className="border-b border-slate-800 px-6 py-3">
-        <div className="flex items-center justify-between">
-          <span className="font-semibold">{project.name}</span>
-          <StageProgressBar currentStage={undefined} projectId={projectId} />
-        </div>
+      {/* Top bar */}
+      <header className="border-b border-terminal-border px-4 py-2 flex items-center gap-4 bg-terminal-bg shrink-0">
+        <span className="text-xs font-mono text-terminal-accent shrink-0">
+          {project.name.toLowerCase()}
+        </span>
+        <span className="text-terminal-dim text-xs">·</span>
+        <StageProgressBar currentStage={undefined} projectId={projectId} />
       </header>
-      <div className="flex-1 overflow-hidden">{children}</div>
+
+      {/* Content + Files */}
+      <div className="flex flex-1 overflow-hidden">
+        <div className="flex-1 overflow-hidden">{children}</div>
+        <FilesPanel projectId={projectId} />
+      </div>
     </div>
   )
 }

@@ -1,7 +1,7 @@
 import { auth } from '@/auth'
-import { redirect } from 'next/navigation'
+import { redirect, notFound } from 'next/navigation'
 import { db } from '@/lib/db'
-import { artifacts } from '@scrumbs/db'
+import { artifacts, projects } from '@scrumbs/db'
 import { eq, and, desc } from 'drizzle-orm'
 import { PrdClient } from './client'
 
@@ -12,21 +12,31 @@ export default async function PrdPage({
 }) {
   const { projectId } = await params
   const session = await auth()
-  if (!session) redirect('/')
+  if (!session?.user?.id) redirect('/')
 
-  // Try to find existing requirements artifact for this project
-  // Requirements artifacts are linked via agent tasks -> sprints -> projects,
-  // but for pre-sprint stages we look for any active requirements artifact
+  const [project] = await db
+    .select({ name: projects.name })
+    .from(projects)
+    .where(and(eq(projects.id, projectId), eq(projects.userId, session.user.id)))
+    .limit(1)
+
+  if (!project) notFound()
+
   const [reqArtifact] = await db
-    .select()
+    .select({ contentMd: artifacts.contentMd })
     .from(artifacts)
-    .where(and(eq(artifacts.type, 'requirements'), eq(artifacts.status, 'current')))
+    .where(and(
+      eq(artifacts.projectId, projectId),
+      eq(artifacts.type, 'requirements'),
+      eq(artifacts.status, 'current'),
+    ))
     .orderBy(desc(artifacts.createdAt))
     .limit(1)
 
   return (
     <PrdClient
       projectId={projectId}
+      projectName={project.name}
       existingRequirements={reqArtifact?.contentMd}
     />
   )

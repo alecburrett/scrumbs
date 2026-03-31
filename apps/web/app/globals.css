@@ -1,3 +1,64 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+@layer base {
+  * {
+    box-sizing: border-box;
+  }
+
+  html,
+  body {
+    background-color: #0a0a0a;
+    color: #e0e0e0;
+    font-family: var(--font-geist-mono), ui-monospace, SFMono-Regular, monospace;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  /* Scrollbar */
+  ::-webkit-scrollbar {
+    width: 4px;
+    height: 4px;
+  }
+  ::-webkit-scrollbar-track {
+    background: #0a0a0a;
+  }
+  ::-webkit-scrollbar-thumb {
+    background: #2a2a2a;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background: #3a3a3a;
+  }
+
+  /* Selection */
+  ::selection {
+    background: #00ff8830;
+    color: #e0e0e0;
+  }
+}
+
+@layer components {
+  /* Terminal label — uppercase, muted, small */
+  .terminal-label {
+    @apply text-xs font-mono uppercase tracking-widest text-terminal-muted;
+  }
+
+  /* Accent glow on focus */
+  .terminal-input {
+    @apply bg-terminal-surface border border-terminal-border text-terminal-text font-mono text-sm px-3 py-2
+           focus:outline-none focus:border-terminal-accent placeholder:text-terminal-dim
+           transition-colors;
+  }
+
+  /* Terminal button */
+  .terminal-btn {
+    @apply border border-terminal-accent text-terminal-accent font-mono text-sm px-4 py-2
+           hover:bg-terminal-accent hover:text-black transition-colors cursor-pointer;
+  }
+
+  .terminal-btn-muted {
+    @apply border border-terminal-border text-terminal-muted font-mono text-sm px-4 py-2
+           hover:border-terminal-text hover:text-terminal-text transition-colors cursor-pointer;
+  }
+}

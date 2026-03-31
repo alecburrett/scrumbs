@@ -1,6 +1,6 @@
 'use client'
 
-import { PERSONA_COLOURS, PERSONA_DISPLAY_NAMES } from '@/lib/persona-constants'
+import { PERSONA_DISPLAY_NAMES } from '@/lib/persona-constants'
 import type { PersonaName } from '@scrumbs/types'
 import { ApproveButton } from './approve-button'
 
@@ -17,37 +17,33 @@ export function PersonaMessage({
   requiresApproval,
   taskId,
 }: PersonaMessageProps) {
-  // User message (no persona)
   if (!personaName) {
     return (
-      <div className="space-y-1">
+      <div className="space-y-0.5">
         <div className="flex items-center gap-2">
-          <span className="w-2 h-2 rounded-full bg-slate-400" />
-          <span className="text-xs font-medium text-slate-400">You</span>
+          <span className="text-xs font-mono text-terminal-dim">you</span>
+          <span className="text-terminal-dim text-xs">$</span>
         </div>
-        <div className="ml-4 p-3 bg-slate-700 rounded-lg text-sm text-slate-200 whitespace-pre-wrap">
-          {content}
+        <div className="ml-0 pl-3 border-l border-terminal-dim">
+          <pre className="text-xs font-mono text-terminal-text whitespace-pre-wrap leading-relaxed">{content}</pre>
         </div>
       </div>
     )
   }
 
-  const colour = PERSONA_COLOURS[personaName]
-  const displayName = PERSONA_DISPLAY_NAMES[personaName]
+  const name = PERSONA_DISPLAY_NAMES[personaName].toLowerCase()
 
   return (
-    <div className="space-y-1">
+    <div className="space-y-0.5">
       <div className="flex items-center gap-2">
-        <span className="w-2 h-2 rounded-full" style={{ backgroundColor: colour }} />
-        <span className="text-xs font-medium" style={{ color: colour }}>
-          {displayName}
-        </span>
+        <span className="text-xs font-mono text-terminal-accent">{name}</span>
+        <span className="text-terminal-dim text-xs">&gt;</span>
       </div>
-      <div className="ml-4 p-3 bg-slate-800 rounded-lg text-sm text-slate-200 whitespace-pre-wrap">
-        {content}
+      <div className="ml-0 pl-3 border-l border-terminal-accent/30">
+        <pre className="text-xs font-mono text-terminal-text whitespace-pre-wrap leading-relaxed">{content}</pre>
       </div>
       {requiresApproval && taskId && (
-        <div className="ml-4 mt-2">
+        <div className="pl-3 mt-2">
           <ApproveButton taskId={taskId} />
         </div>
       )}

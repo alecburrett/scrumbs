@@ -18,29 +18,30 @@ export function StepBackModal({
   if (!isOpen) return null
 
   return (
-    <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50">
-      <div className="bg-slate-900 border border-slate-700 rounded-xl p-6 max-w-md w-full mx-4 space-y-4">
-        <h3 className="text-lg font-semibold text-white">Step Back?</h3>
-        <p className="text-slate-400 text-sm">
-          Going back from <strong className="text-white">{currentStage}</strong> to{' '}
-          <strong className="text-white">{priorStage}</strong> will mark all artifacts from
-          the current stage as superseded. This cannot be undone.
+    <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 font-mono">
+      <div className="bg-terminal-surface border border-terminal-border p-6 max-w-md w-full mx-4 space-y-4">
+        <div className="text-xs text-terminal-warn tracking-widest uppercase">! step back</div>
+        <p className="text-terminal-muted text-xs leading-relaxed">
+          going back from{' '}
+          <span className="text-terminal-text">{currentStage.toLowerCase()}</span> to{' '}
+          <span className="text-terminal-text">{priorStage.toLowerCase()}</span>{' '}
+          will mark all artifacts from the current stage as superseded. this cannot be undone.
         </p>
-        <p className="text-slate-500 text-xs">
-          Git commits on the feature branch are preserved.
+        <p className="text-terminal-dim text-xs">
+          git commits on the feature branch are preserved.
         </p>
         <div className="flex gap-3 pt-2">
           <button
             onClick={onCancel}
-            className="flex-1 py-2 border border-slate-700 text-slate-300 rounded-lg hover:bg-slate-800 transition-colors text-sm"
+            className="flex-1 py-1.5 border border-terminal-border text-terminal-muted hover:border-terminal-muted hover:text-terminal-text transition-colors text-xs"
           >
-            Cancel
+            cancel
           </button>
           <button
             onClick={onConfirm}
-            className="flex-1 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors text-sm font-medium"
+            className="flex-1 py-1.5 border border-terminal-error text-terminal-error hover:bg-terminal-error hover:text-black transition-colors text-xs"
           >
-            Step Back
+            step back →
           </button>
         </div>
       </div>
